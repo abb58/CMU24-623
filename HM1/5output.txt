@@ -1,0 +1,11 @@
+The integer 11 is PRIME
+The integer 28 is COMPOSITE
+The integer 45 is COMPOSITE
+The integer 397 is PRIME
+The integer 677 is PRIME
+The integer 951 is COMPOSITE
+The integer 2552 is COMPOSITE
+The integer 6447 is COMPOSITE
+The integer 6449 is PRIME
+The integer 7411 is PRIME
+The integer 7412 is COMPOSITE
