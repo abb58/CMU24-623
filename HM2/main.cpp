@@ -23,14 +23,18 @@
 #include "fileio.cpp"
 
 
-//------ Function Definitions ------
+
+//-----------------------------------------------------------------//
+
 /*
  * brief - write information on time step , time, total energy,
  *         potential energy, kinetic energy, elapsed time.
  */
-void print_data()
+void dump_stats()
 {
 }
+
+//-----------------------------------------------------------------//
 
 /*
  * brief - initialize the positions by reading the inputs.
@@ -45,6 +49,7 @@ void init(int Natoms, const char* filename){
   r_old = new double*[Natoms];
   v_old = new double*[Natoms];
   f_old = new double*[Natoms];
+
   for(int i=0; i<Natoms; i++){
     r[i]     = new double[3];
     v[i]     = new double[3];
@@ -63,6 +68,8 @@ void init(int Natoms, const char* filename){
     f[i][0] = 0.0; f[i][1] = 0.0; f[i][2] = 0.0;
   }
 }
+
+//-----------------------------------------------------------------//
 
 void vv_scheme()
 {
@@ -84,6 +91,56 @@ void vv_scheme()
 
 }
 
+//-----------------------------------------------------------------//
+
+double calc_energy_force()
+{
+
+  // Before calculating energy and forces again make sure to rezero them
+  u = 0.0;
+  for(int i=0; i<Natoms; i++){
+    f[i][0] = 0.0; f[i][1] = 0.0; f[i][2] = 0.0;
+  }
+
+  
+  for(int i=0; i<Natoms; i++){
+    for(int j=i+1; j<Natoms; j++){
+      dx = r[i][0] - r[j][0];
+      dy = r[i][1] - r[j][1];
+      dz = r[i][2] - r[j][2];
+      r2 = (dx*dx) + (dy*dy) + (dz*dz);
+      r6 = r2*r2*r2;
+      Ir6 = 1/r6;
+      
+      // Pair Energy
+      u += 4*(Ir6*Ir6 - Ir6);
+      
+      // LJ Force
+      // This procedure of manipulating r avoids use of sqrt()
+      F  = 24*(2*Ir6*Ir6 - Ir6);
+      f[i][0] += F * (dx/r2);
+      f[i][1] += F * (dy/r2);
+      f[i][2] += F * (dy/r2);
+
+      f[j][0] -= F * (dx/r2);
+      f[j][0] -= F * (dx/r2);
+      f[j][0] -= F * (dx/r2);
+    }
+  }
+  return u;
+}
+
+//-----------------------------------------------------------------//
+
+double calc_kenergy()
+{
+  for(int i=0; i<Natoms; i++){
+    ke += (v[i][0]*v[i][0]) + (v[i][1]*v[i][1]) + (v[i][2]*v[i][2]);
+  }
+  ke *= 0.5;
+}
+
+//-----------------------------------------------------------------//
 
 int main(int argc, char** argv)
 {
@@ -91,11 +148,14 @@ int main(int argc, char** argv)
 
   // Determine the number of atoms
   Natoms = get_natoms(filename);
-  std::cout << "1. natoms :" << Natoms << std::endl;
 
   // Initialize the positions !
   init(Natoms, filename);
 
-  std::cout << "2. natoms :" << Natoms << std::endl;
+  // Calculate energy and forces
+  U=calc_energy_force();
+  KE=calc_kenergy();
+  TE=U+KE;
+  
   return 0;
 }
