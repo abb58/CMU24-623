@@ -1,4 +1,4 @@
-mdlj:
+main:
 
 clean:
-	rm -rf *.o mdlj
+	rm -rf *.o *.ener *.xyz main

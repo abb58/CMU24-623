@@ -11,28 +11,16 @@
  *    - make
  *    - make clean
  *
- * External Dependencies :
- * GNU Scientific Library is required.
- *
  * (c) 2015-16
  */
 
 #include <iostream>
+#include <fstream>
 #include <cmath>
 #include "driver.h"
 #include "fileio.cpp"
 
 
-
-//-----------------------------------------------------------------//
-
-/*
- * brief - write information on time step , time, total energy,
- *         potential energy, kinetic energy, elapsed time.
- */
-void dump_stats()
-{
-}
 
 //-----------------------------------------------------------------//
 
@@ -58,7 +46,7 @@ void init(int Natoms, const char* filename){
     v_old[i] = new double[3];
     f_old[i] = new double[3];
   }
-  
+
   // initialize the positions
   read_xyz(Natoms, filename);
 
@@ -74,35 +62,65 @@ void init(int Natoms, const char* filename){
 void vv_scheme()
 {
   double tfact = dt/(2*m);
-  // TODO : Do something for the direction !
+
   // TODO : Perform openMP.
   for(int i=0; i<Natoms; i++){
+    r_old[i][0] = r[i][0];
+    r_old[i][1] = r[i][1];
+    r_old[i][2] = r[i][2];
 
+    v_old[i][0] = v[i][0];
+    v_old[i][1] = v[i][1];
+    v_old[i][2] = v[i][2];
+
+    f_old[i][0] = f[i][0];
+    f_old[i][1] = f[i][1];
+    f_old[i][2] = f[i][2];
+  }
+
+  for(int i=0; i<Natoms; i++){
     // Step 1. v(t+0.5dt)
-    v[][] = v_old[][] + f_old[i][]*tfact;;
-    v_old[][] = v[][];
-    
+    v[i][0] = v_old[i][0] + f_old[i][0]*tfact;
+    v[i][1] = v_old[i][1] + f_old[i][1]*tfact;
+    v[i][2] = v_old[i][2] + f_old[i][2]*tfact;
+
+    v_old[i][0] = v[i][0];
+    v_old[i][1] = v[i][1];
+    v_old[i][2] = v[i][2];
+
     // Step 2. r(t+dt)
-    r[][] = r_old[][] + v_old[][]*dt;
-    
+    r[i][0] = r_old[i][0] + v_old[i][0]*dt;
+    r[i][1] = r_old[i][1] + v_old[i][1]*dt;
+    r[i][2] = r_old[i][2] + v_old[i][2]*dt;
+  }
+
+  calc_energy_force();
+
+  for(int i=0; i<Natoms; i++){
     // Step 3. v(t+dt)
-    v[][] = v_old[][] + f[][]*tfact;
+    v[i][0] = v_old[i][0] + f[i][0]*tfact;
+    v[i][1] = v_old[i][1] + f[i][1]*tfact;
+    v[i][2] = v_old[i][2] + f[i][2]*tfact;
   }
 
 }
 
 //-----------------------------------------------------------------//
 
-double calc_energy_force()
+void calc_energy_force()
 {
-
   // Before calculating energy and forces again make sure to rezero them
-  u = 0.0;
+  U = 0.0;
+  dx=0.0; dy=0.0; dz=0.0;
+  r2 = 0.0; r6=0.0; Ir6=0.0;
+  F = 0.0;
+  
   for(int i=0; i<Natoms; i++){
-    f[i][0] = 0.0; f[i][1] = 0.0; f[i][2] = 0.0;
+    f[i][0] = 0.0;
+    f[i][1] = 0.0;
+    f[i][2] = 0.0;
   }
 
-  
   for(int i=0; i<Natoms; i++){
     for(int j=i+1; j<Natoms; j++){
       dx = r[i][0] - r[j][0];
@@ -111,33 +129,42 @@ double calc_energy_force()
       r2 = (dx*dx) + (dy*dy) + (dz*dz);
       r6 = r2*r2*r2;
       Ir6 = 1/r6;
-      
+
       // Pair Energy
-      u += 4*(Ir6*Ir6 - Ir6);
-      
+      U += 4*(Ir6*Ir6 - Ir6);
+
       // LJ Force
       // This procedure of manipulating r avoids use of sqrt()
-      F  = 24*(2*Ir6*Ir6 - Ir6);
+      F        = 24*(2*Ir6*Ir6 - Ir6);
       f[i][0] += F * (dx/r2);
       f[i][1] += F * (dy/r2);
       f[i][2] += F * (dy/r2);
 
       f[j][0] -= F * (dx/r2);
-      f[j][0] -= F * (dx/r2);
-      f[j][0] -= F * (dx/r2);
+      f[j][1] -= F * (dx/r2);
+      f[j][2] -= F * (dx/r2);
     }
   }
-  return u;
 }
 
 //-----------------------------------------------------------------//
 
-double calc_kenergy()
+void calc_kenergy()
 {
+  for(int i=0; i<Natoms; i++) KE += (v[i][0]*v[i][0]) + (v[i][1]*v[i][1]) + (v[i][2]*v[i][2]);
+  KE *= 0.5;
+}
+
+//-----------------------------------------------------------------//
+
+void calc_momentum()
+{
+  // Assumption : Mass of atoms = 1.0
   for(int i=0; i<Natoms; i++){
-    ke += (v[i][0]*v[i][0]) + (v[i][1]*v[i][1]) + (v[i][2]*v[i][2]);
+    px += v[i][0];
+    py += v[i][1];
+    pz += v[i][2];
   }
-  ke *= 0.5;
 }
 
 //-----------------------------------------------------------------//
@@ -152,10 +179,30 @@ int main(int argc, char** argv)
   // Initialize the positions !
   init(Natoms, filename);
 
-  // Calculate energy and forces
-  U=calc_energy_force();
-  KE=calc_kenergy();
-  TE=U+KE;
+  // Loop over timesteps
+  std::ofstream simFile,enerFile;
+  simFile.open("LDmj_sim.xyz");
+  enerFile.open("LDmj_sim.ener");
+  enerFile << "Time step" << "       " << "time" << "             " << "PE" << "        " << "KE"
+	   << "          " << "TE" << "          " << Px "          " << Py << "          " << Pz << "           " << std::endl; 
+  for(int k=0; k<=2000; k++) {
+    elapsed_time = dt*double(k);
+
+    // Calculate pair-energy and forces
+    if(k==0) calc_energy_force();
+    calc_kenergy();
+    TE=U+KE;
+    std::cout << k << "      " << elapsed_time << "      " << U << "      " << KE << "      " << TE << "      " << std::endl;
+    calc_momentum();
+    
+    write_xyz(simFile, k);
+    dump_stats(enerFile, k);
+
+    // parameters are computed for (i+1)
+    vv_scheme();
+  }
+  simFile.close();
+  enerFile.close();
   
   return 0;
 }
