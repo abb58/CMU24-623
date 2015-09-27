@@ -1,15 +1,17 @@
 /*
- * Molecular Dynamics simulatio of lennard-jones nano
- * particle.
+ * Molecular Dynamics simulation of lennard-jones nano-
+ * particles.
  *
  * Abhishek Bagusetty
  *
- * Writte for CMU24-623 Molecular Simulation of Materials,
+ * Written for CMU24-623 Molecular Simulation of Materials,
  * Fall 2015-16
  *
  * Building instructions :
  *    - make
  *    - make clean
+ * Loop unrolling is implemented for the coordinates so
+ * hardware thread gets appropriate work.
  *
  * (c) 2015-16
  */
@@ -19,7 +21,6 @@
 #include <cmath>
 #include "driver.h"
 #include "fileio.cpp"
-
 
 
 //-----------------------------------------------------------------//
@@ -62,7 +63,7 @@ void init(int Natoms, const char* filename){
 void vv_scheme()
 {
   double tfact = dt/(2*m);
-
+  
   // TODO : Perform openMP.
   for(int i=0; i<Natoms; i++){
     r_old[i][0] = r[i][0];
@@ -102,7 +103,6 @@ void vv_scheme()
     v[i][1] = v_old[i][1] + f[i][1]*tfact;
     v[i][2] = v_old[i][2] + f[i][2]*tfact;
   }
-
 }
 
 //-----------------------------------------------------------------//
@@ -138,11 +138,11 @@ void calc_energy_force()
       F        = 24*(2*Ir6*Ir6 - Ir6);
       f[i][0] += F * (dx/r2);
       f[i][1] += F * (dy/r2);
-      f[i][2] += F * (dy/r2);
+      f[i][2] += F * (dz/r2);
 
       f[j][0] -= F * (dx/r2);
-      f[j][1] -= F * (dx/r2);
-      f[j][2] -= F * (dx/r2);
+      f[j][1] -= F * (dy/r2);
+      f[j][2] -= F * (dz/r2);
     }
   }
 }
@@ -183,16 +183,19 @@ int main(int argc, char** argv)
   std::ofstream simFile,enerFile;
   simFile.open("LDmj_sim.xyz");
   enerFile.open("LDmj_sim.ener");
-  enerFile << "Time step" << "       " << "time" << "             " << "PE" << "        " << "KE"
-	   << "          " << "TE" << "          " << Px "          " << Py << "          " << Pz << "           " << std::endl; 
-  for(int k=0; k<=2000; k++) {
+  enerFile << "Time step" << std::setw(15) << "time" << std::setw(15) << "PE" << std::setw(15) << "KE"
+	   << std::setw(15) << "TE" << std::setw(15) << "Px" << std::setw(15) << "Py" << std::setw(15)
+	   << "Pz" << std::setw(15) << std::endl;
+
+  for(int k=0; k<=1000; k++) {
     elapsed_time = dt*double(k);
 
     // Calculate pair-energy and forces
     if(k==0) calc_energy_force();
     calc_kenergy();
     TE=U+KE;
-    std::cout << k << "      " << elapsed_time << "      " << U << "      " << KE << "      " << TE << "      " << std::endl;
+    std::cout << std::setw(8) << k << std::setw(15) << elapsed_time << std::setw(15) << U << std::setw(15) << KE << std::setw(15)
+	      << TE << std::setw(15) << px << std::setw(15) << py <<std::setw(15) << pz << std::setw(15) << std::endl;
     calc_momentum();
     
     write_xyz(simFile, k);

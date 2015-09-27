@@ -1,5 +1,6 @@
 #include <fstream>
 #include <iostream>
+#include <iomanip>
 
 /* 
  * brief - Write the coordinates of the atom at every timestep
@@ -10,12 +11,12 @@ void write_xyz(std::ofstream& simFile, int config)
   simFile << "    " << Natoms+1 << std::endl;
   simFile << " i =  " << config << std::endl;
   for(int i=0; i<Natoms; i++) {
-    simFile << "H       " << r[i][0] << "      " << r[i][1] << "      " << r[i][2] << std::endl;
+    simFile << "H" << std::setw(15) << r[i][0] << std::setw(20) << r[i][1] << std::setw(20) << r[i][2] << std::endl;
     Xcom += r[i][0];
     Ycom += r[i][1];
     Zcom += r[i][2];
   }
-  simFile << "O       " << Xcom/Natoms << "      " << Ycom/Natoms << "      " << Zcom/Natoms << std::endl;
+  simFile << "O" << std::setw(15) << Xcom/Natoms << std::setw(20) << Ycom/Natoms << std::setw(20) << Zcom/Natoms << std::endl;
 }
 
 
@@ -24,8 +25,8 @@ void write_xyz(std::ofstream& simFile, int config)
  */
 void dump_stats(std::ofstream& enerFile, int config)
 {
-  enerFile << "   "  << config << "      " << elapsed_time << "      " << U << "       " << KE
-	   << "       " << TE << "         " << px << "       " << py << "       " << py << std::endl;
+  enerFile << std::setw(8) << config << std::setw(15) << elapsed_time << std::setw(15) << U << std::setw(15) << KE
+	   << std::setw(15) << TE << std::setw(15) << px << std::setw(15) << py << std::setw(15) << py << std::endl;
 }
 
 
