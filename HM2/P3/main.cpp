@@ -32,6 +32,7 @@
 void init(int Natoms, const char* filename){
 
   // Memory Management
+  m     = new double[Natoms];
   r     = new double*[Natoms];
   v     = new double*[Natoms];
   f     = new double*[Natoms];
@@ -51,8 +52,9 @@ void init(int Natoms, const char* filename){
   // initialize the positions
   read_xyz(Natoms, filename);
 
-  // intialize the velocities to zero
+  // intialize the mass, velocities, forces
   for(int i=0; i<Natoms; i++){
+    m[i] = 1.0;
     v[i][0] = 0.0; v[i][1] = 0.0; v[i][2] = 0.0;
     f[i][0] = 0.0; f[i][1] = 0.0; f[i][2] = 0.0;
   }
@@ -62,7 +64,7 @@ void init(int Natoms, const char* filename){
 
 void vv_scheme()
 {
-  double tfact = dt/(2*m);
+  double tfact;
   
   // TODO : Perform openMP.
   for(int i=0; i<Natoms; i++){
@@ -80,6 +82,7 @@ void vv_scheme()
   }
 
   for(int i=0; i<Natoms; i++){
+    tfact = dt/(2.0*m[i]);
     // Step 1. v(t+0.5dt)
     v[i][0] = v_old[i][0] + f_old[i][0]*tfact;
     v[i][1] = v_old[i][1] + f_old[i][1]*tfact;
@@ -95,7 +98,8 @@ void vv_scheme()
     r[i][2] = r_old[i][2] + v_old[i][2]*dt;
   }
 
-  calc_energy_force();
+  calc_pairenergy();
+  calc_force();
 
   for(int i=0; i<Natoms; i++){
     // Step 3. v(t+dt)
@@ -107,10 +111,33 @@ void vv_scheme()
 
 //-----------------------------------------------------------------//
 
-void calc_energy_force()
+void calc_pairenergy()
 {
-  // Before calculating energy and forces again make sure to rezero them
+  // Before calculating energy, make sure to rezero them
   U = 0.0;
+  dx=0.0; dy=0.0; dz=0.0;
+  r2 = 0.0; r6=0.0; Ir6=0.0;
+  
+  for(int i=0; i<Natoms; i++){
+    for(int j=i+1; j<Natoms; j++){
+      dx = r[i][0] - r[j][0];
+      dy = r[i][1] - r[j][1];
+      dz = r[i][2] - r[j][2];
+      r2 = (dx*dx) + (dy*dy) + (dz*dz);
+      r6 = r2*r2*r2;
+      Ir6 = 1/r6;
+
+      // Pair Energy
+      U += 4*(Ir6*Ir6 - Ir6);
+    }
+  }
+}
+
+//-----------------------------------------------------------------//
+
+void calc_force()
+{
+  // Before calculating energy, make sure to rezero them
   dx=0.0; dy=0.0; dz=0.0;
   r2 = 0.0; r6=0.0; Ir6=0.0;
   F = 0.0;
@@ -129,9 +156,6 @@ void calc_energy_force()
       r2 = (dx*dx) + (dy*dy) + (dz*dz);
       r6 = r2*r2*r2;
       Ir6 = 1/r6;
-
-      // Pair Energy
-      U += 4*(Ir6*Ir6 - Ir6);
 
       // LJ Force
       // This procedure of manipulating r avoids use of sqrt()
@@ -161,9 +185,9 @@ void calc_momentum()
 {
   // Assumption : Mass of atoms = 1.0
   for(int i=0; i<Natoms; i++){
-    px += v[i][0];
-    py += v[i][1];
-    pz += v[i][2];
+    px += m[i]*v[i][0];
+    py += m[i]*v[i][1];
+    pz += m[i]*v[i][2];
   }
 }
 
@@ -191,7 +215,7 @@ int main(int argc, char** argv)
     elapsed_time = dt*double(k);
 
     // Calculate pair-energy and forces
-    if(k==0) calc_energy_force();
+    if(k==0) calc_force();
     calc_kenergy();
     TE=U+KE;
     std::cout << std::setw(8) << k << std::setw(15) << elapsed_time << std::setw(15) << U << std::setw(15) << KE << std::setw(15)
