@@ -10,15 +10,16 @@ void read_xyz(int natoms, const char* filename);
 
 
 void init();
-void calc_energy_force();
+void calc_pairenergy();
+void calc_force();
 void calc_kenergy();
 void vv_scheme();
 
 double elapsed_time=0.0;
 double dt=0.002;
 double t;
-double m=1;
 int Natoms;
+double *m=NULL;
 double **r=NULL, **v=NULL, **f=NULL;
 double **r_old=NULL, **v_old=NULL, **f_old=NULL;
 
