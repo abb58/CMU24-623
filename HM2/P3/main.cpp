@@ -67,6 +67,7 @@ void vv_scheme()
   double tfact;
   
   // TODO : Perform openMP.
+  // reinitialize all the temp variables to zero.
   for(int i=0; i<Natoms; i++){
     r_old[i][0] = r[i][0];
     r_old[i][1] = r[i][1];
@@ -155,7 +156,7 @@ void calc_force()
       dz = r[i][2] - r[j][2];
       r2 = (dx*dx) + (dy*dy) + (dz*dz);
       r6 = r2*r2*r2;
-      Ir6 = 1/r6;
+      Ir6 = 1.0/r6;
 
       // LJ Force
       // This procedure of manipulating r avoids use of sqrt()
@@ -175,6 +176,7 @@ void calc_force()
 
 void calc_kenergy()
 {
+  KE = 0.0;
   for(int i=0; i<Natoms; i++) KE += (v[i][0]*v[i][0]) + (v[i][1]*v[i][1]) + (v[i][2]*v[i][2]);
   KE *= 0.5;
 }
@@ -183,6 +185,7 @@ void calc_kenergy()
 
 void calc_momentum()
 {
+  px=0.0; py=0.0; pz=0.0;
   // Assumption : Mass of atoms = 1.0
   for(int i=0; i<Natoms; i++){
     px += m[i]*v[i][0];
@@ -207,8 +210,10 @@ int main(int argc, char** argv)
   std::ofstream simFile,enerFile;
   simFile.open("LDmj_sim.xyz");
   enerFile.open("LDmj_sim.ener");
-  enerFile << "Time step" << std::setw(15) << "time" << std::setw(15) << "PE" << std::setw(15) << "KE"
-	   << std::setw(15) << "TE" << std::setw(15) << "Px" << std::setw(15) << "Py" << std::setw(15)
+  enerFile << "Time step" << std::setw(15) << "time"
+	   << std::setw(15) << "PE" << std::setw(15) << "KE"
+	   << std::setw(15) << "TE" << std::setw(15) << "Px"
+	   << std::setw(15) << "Py" << std::setw(15)
 	   << "Pz" << std::setw(15) << std::endl;
 
   for(int k=0; k<=1000; k++) {
@@ -216,18 +221,24 @@ int main(int argc, char** argv)
 
     // Calculate pair-energy and forces
     if(k==0) calc_force();
+
     calc_kenergy();
     TE=U+KE;
-    std::cout << std::setw(8) << k << std::setw(15) << elapsed_time << std::setw(15) << U << std::setw(15) << KE << std::setw(15)
-	      << TE << std::setw(15) << px << std::setw(15) << py <<std::setw(15) << pz << std::setw(15) << std::endl;
+
+    std::cout << std::setw(8)  << k  << std::setw(15) << elapsed_time
+	      << std::setw(15) << U  << std::setw(15) << KE
+	      << std::setw(15) << TE << std::setw(15) << px
+	      << std::setw(15) << py << std::setw(15) << pz
+	      << std::setw(15) << std::endl;
+
     calc_momentum();
-    
     write_xyz(simFile, k);
     dump_stats(enerFile, k);
 
     // parameters are computed for (i+1)
     vv_scheme();
   }
+  
   simFile.close();
   enerFile.close();
   
