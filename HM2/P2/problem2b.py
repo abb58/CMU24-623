@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pylab as plt
 
 Vo = 1.414;
-t = np.linspace(0,20,100)
+t = np.linspace(0,20,160)
 x = Vo*np.sin(t)
 v = Vo*np.cos(t)
 
@@ -22,7 +22,7 @@ plt.show()
 
 #----------- Problem 2 ------------
 x1c,v1c=[],[]
-dt = 0.2  # time step
+dt = 0.125  # time step
 N = 20/dt # No of steps
 t = np.linspace(0,20,N) # time  array
 
@@ -33,6 +33,22 @@ for i in range(len(t)):
 
     tempv = Vo*( np.cos(t[i]) - 0.5*dt*np.sin(t[i]) - 0.5*dt*np.sin(t[i])*np.cos(dt) - 0.5*dt*np.cos(t[i])*np.sin(dt) )
     v1c.append(tempv)
+
+# Conservation of Energy
+Ef = [0.5*i*i for i in x1c]
+kf = [0.5*j*j for j in v1c]
+Tf = [a + b for a, b in zip(Ef, kf)]
+print(len(Tf))
+print(len(t))
+Ti = np.ones(len(Tf))
+plt.plot(t, Tf, '-k', label='Energy-final')
+plt.hold(True)
+plt.plot(t, Ti, 'ok', label='Energy-initial')
+plt.xlabel('t')
+plt.ylabel('x(t)')
+plt.title('Case (i) Linear Spring (VV scheme vs Analytical)')
+plt.legend(loc='best')
+plt.show()
 
     
 fig1c_pos = plt.figure()
@@ -67,7 +83,7 @@ plt.legend(loc='best')
 plt.show()
 
 
-x = np.linspace(-4,4,100)
+x = np.linspace(-4,4,160)
 Usa = 0.5*x*x
 Usb = [0.5*i*i for i in x1c]
 fig1c_pot = plt.figure()

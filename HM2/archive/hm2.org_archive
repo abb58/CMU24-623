@@ -1,0 +1,29 @@
+#    -*- mode: org -*-
+
+
+Archived entries from file /home/abhishek/Desktop/CMU24-623/HM2/hm2.org
+
+
+* (i)
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2015-09-30 Wed 18:42
+  :ARCHIVE_FILE: ~/Desktop/CMU24-623/HM2/hm2.org
+  :ARCHIVE_OLPATH: Problem 1/(a)
+  :ARCHIVE_CATEGORY: hm2
+  :END:
+\begin{equation}
+\frac{1}{2m_{i}}\frac{\partial}{\partial\bm{p_{i}}} = \frac{\bm{p_{i}}}{m_{i}}
+\label{eq:1.1a}}
+\end{equation}
+
+Setting u(r) = 0 in eqref:eq:7
+$$\implies 0 = 4\epsilon\Big[\big(\frac{\sigma}{r}\big)^{12}-\big(\frac{\sigma}{r}\big)^6\Big]$$
+
+\begin{equation}
+\implies \big(\frac{\sigma}{r}\big)^6\Big[\big(\frac{\sigma}{r}\big)^6-1\Big] = 0 \label{eq:8})
+\end{equation}
+
+Roots of the eqref:eq:8, \underline{$r = \infty$} and \underline{$r = \sigma$}, at which $u(r)=0$.
+
+For finding minimum for eqref:eq:7, set $\frac{du(r)}{dr} = 0$
+
