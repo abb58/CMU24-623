@@ -1,6 +1,8 @@
 #include <fstream>
 #include <iostream>
 #include <iomanip>
+#include "driver.h"
+
 
 /* 
  * brief - Write the coordinates of the atom at every timestep
@@ -25,8 +27,11 @@ void write_xyz(std::ofstream& simFile, int config)
  */
 void dump_stats(std::ofstream& enerFile, int config)
 {
-  enerFile << std::setw(8) << config << std::setw(15) << elapsed_time << std::setw(15) << U << std::setw(15) << KE
-	   << std::setw(15) << TE << std::setw(15) << px << std::setw(15) << py << std::setw(15) << py << std::endl;
+  enerFile << std::setw(8) << config << std::setw(15) << elapsed_time
+	   << std::setw(15) << T  << std::setw(15) << P
+	   << std::setw(15) << U << std::setw(15) << KE
+	   << std::setw(15) << TE << std::setw(15) << px
+	   << std::setw(15) << py << std::setw(15) << py << std::endl;
 }
 
 
