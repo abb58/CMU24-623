@@ -25,7 +25,7 @@
 
 // Function definitions
 void calc_pairenergy();
-void calc_force();
+void calc_virial_force();
 void calc_kenergy();
 void calc_momentum();
 void calc_inst_temp_pr();
@@ -36,7 +36,7 @@ double dt=0.002;
 double t;
 int Natoms;
 double *m=NULL;
-double Rcut=2.5;
+double R=0.0, Rcut=2.5;
 double R2cut=0.0, RIcut=0.0, RI2cut=0.0, RI6cut=0.0, RI12cut=0.0;
 double **r=NULL, **v=NULL, **f=NULL;
 double **r_old=NULL, **v_old=NULL, **f_old=NULL;
@@ -50,7 +50,7 @@ double U=0.0, KE=0.0, TE=0.0;
 double dx=0.0, dy=0.0, dz=0.0;
 double r2=0.0, r6=0.0, Ir6=0.0;
 double px=0.0, py=0.0, pz=0.0;
-double F=0.0;
+double fcut=0.0, fijx=0.0, fijy=0.0, fijz=0.0, F=0.0;
 
 //-----------------------------------------------------------------//
 /* 
@@ -76,10 +76,12 @@ void write_xyz(std::ofstream& simFile, int config)
  */
 void dump_stats(std::ofstream& enerFile, int config)
 {
-  enerFile << std::setw(8) << config << std::setw(15) << elapsed_time << std::setw(15) << U << std::setw(15) << KE
-	   << std::setw(15) << TE << std::setw(15) << px << std::setw(15) << py << std::setw(15) << py << std::endl;
+  enerFile << std::setw(8) << config << std::setw(12) << elapsed_time
+	   << std::setw(12) << T  << std::setw(12) << P
+	   << std::setw(12) << U  << std::setw(12) << KE
+	   << std::setw(12) << TE << std::setw(15) << px
+	   << std::setw(15) << py << std::setw(15) << py << std::endl;
 }
-
 
 /*
  * brief - get number of atoms
@@ -98,7 +100,6 @@ int get_natoms(const char* filename)
   in_xyz.close();
   return (count-1);
 }
-
 
 /*
  * brief - read the coordinates of atoms from a text file
@@ -124,7 +125,6 @@ void read_xyz(const int Natoms, const char* filename)
  *
  */
 void init(int Natoms, const char* filename){
-
   // Memory Management
   m     = new double[Natoms];
   r     = new double*[Natoms];
@@ -150,7 +150,7 @@ void init(int Natoms, const char* filename){
   srand (time(NULL));
   for(int i=0; i<Natoms; i++){
     m[i] = 1.0;
-    //    v[i][0] = 0.0; v[i][1] = 0.0; v[i][2] = 0.0;
+
     v[i][0] = 2*(double(rand())/double(RAND_MAX)) - 1.0;
     v[i][1] = 2*(double(rand())/double(RAND_MAX)) - 1.0;
     v[i][2] = 2*(double(rand())/double(RAND_MAX)) - 1.0;
@@ -225,8 +225,8 @@ void vv_scheme()
   }
 
   calc_pairenergy();
-  calc_force();
-
+  calc_virial_force();
+  
   for(int i=0; i<Natoms; i++){
     // Step 3. v(t+dt)
     v[i][0] = v_old[i][0] + f[i][0]*tfact;
@@ -240,34 +240,42 @@ void vv_scheme()
 void calc_pairenergy()
 {
   // Before calculating energy, make sure to rezero them
-  U = 0.0;
-  dx=0.0; dy=0.0; dz=0.0;
-  r2 = 0.0; r6=0.0; Ir6=0.0;
-  
+  double URcut=0.0; U=0.0;
+  URcut=4.0*(RI12cut - RI6cut);
+    
   for(int i=0; i<Natoms; i++){
     for(int j=i+1; j<Natoms; j++){
+      R=0.0;
+      dx=0.0; dy=0.0; dz=0.0;
+      r2=0.0; r6=0.0; Ir6=0.0;
+
       dx = r[i][0] - r[j][0];
       dy = r[i][1] - r[j][1];
       dz = r[i][2] - r[j][2];
       r2 = (dx*dx) + (dy*dy) + (dz*dz);
-      r6 = r2*r2*r2;
-      Ir6 = 1/r6;
-
-      // Pair Energy
-      U += 4*(Ir6*Ir6 - Ir6);
+      
+      if(r2<=R2cut){
+	r6 = r2*r2*r2;
+	Ir6 = 1/r6;
+	R=std::sqrt(r2);
+	U+=(4*((Ir6*Ir6)-Ir6)-URcut-(R-Rcut)*RIcut*(-48*RI12cut+24*RI6cut));
+      } // r2<R2cut
     }
   }
 }
 
 //-----------------------------------------------------------------//
 
-void calc_force()
+void calc_virial_force()
 {
   // Before calculating energy, make sure to rezero them
   dx=0.0; dy=0.0; dz=0.0;
   r2 = 0.0; r6=0.0; Ir6=0.0;
-  F = 0.0;
+  fcut=0.0; F=0.0; Vir=0.0;
   
+  // Force cutoff correction : Scheme 2
+  fcut = RIcut*(-48*RI12cut + 24*RI6cut);  // dU/dr at Rcut
+
   for(int i=0; i<Natoms; i++){
     f[i][0] = 0.0;
     f[i][1] = 0.0;
@@ -276,23 +284,32 @@ void calc_force()
 
   for(int i=0; i<Natoms; i++){
     for(int j=i+1; j<Natoms; j++){
+      fijx=0.0; fijy=0.0; fijz=0.0;
+      R = 0;
       dx = r[i][0] - r[j][0];
       dy = r[i][1] - r[j][1];
       dz = r[i][2] - r[j][2];
       r2 = (dx*dx) + (dy*dy) + (dz*dz);
-      r6 = r2*r2*r2;
-      Ir6 = 1.0/r6;
 
-      // LJ Force
-      // This procedure of manipulating r avoids use of sqrt()
-      F        = 24*(2*Ir6*Ir6 - Ir6);
-      f[i][0] += F * (dx/r2);
-      f[i][1] += F * (dy/r2);
-      f[i][2] += F * (dz/r2);
+      if(r2<R2cut){
+	r6 = r2*r2*r2;
+	Ir6 = 1.0/r6;
+	R = std::sqrt(r2);
 
-      f[j][0] -= F * (dx/r2);
-      f[j][1] -= F * (dy/r2);
-      f[j][2] -= F * (dz/r2);
+	F    = 24*(2*Ir6*Ir6 - Ir6);
+	fijx = F*(dx/r2) + fcut*(dx/R);
+	fijy = F*(dy/r2) + fcut*(dy/R);
+	fijz = F*(dz/r2) + fcut*(dz/R);
+	
+	f[i][0] += fijx;
+	f[i][1] += fijy;
+	f[i][2] += fijz;
+	f[j][0] -= fijx;
+	f[j][1] -= fijy;
+	f[j][2] -= fijz;
+      } // r2< R2cut
+
+      Vir += (F+(fcut*R));
     }
   }
 }
@@ -302,7 +319,7 @@ void calc_force()
 void calc_kenergy()
 {
   KE = 0.0;
-  for(int i=0; i<Natoms; i++) KE += (v[i][0]*v[i][0]) + (v[i][1]*v[i][1]) + (v[i][2]*v[i][2]);
+  for(int i=0; i<Natoms; i++) KE += m[i]*((v[i][0]*v[i][0]) + (v[i][1]*v[i][1]) + (v[i][2]*v[i][2]));
   KE *= 0.5;
 }
 
@@ -313,9 +330,9 @@ void calc_momentum()
   px=0.0; py=0.0; pz=0.0;
   // Assumption : Mass of atoms = 1.0
   for(int i=0; i<Natoms; i++){
-    px += v[i][0];
-    py += v[i][1];
-    pz += v[i][2];
+    px += m[i]*v[i][0];
+    py += m[i]*v[i][1];
+    pz += m[i]*v[i][2];
   }
 }
 
@@ -343,7 +360,7 @@ int main(int argc, char** argv)
   // Compute some parameters
   R2cut   = Rcut*Rcut;
   RIcut   = 1/Rcut;
-  RI2cut  = RIcut*RIcut;
+  RI2cut  = 1/R2cut;
   RI6cut  = RI2cut*RI2cut*RI2cut;
   RI12cut = RI6cut*RI6cut;
   Vol = lx*ly*lz;
@@ -371,7 +388,7 @@ int main(int argc, char** argv)
     elapsed_time = dt*double(k);
 
     // Calculate pair-energy and forces
-    if(k==0) calc_force();
+    if(k==0) calc_virial_force();
 
     calc_kenergy();
     TE=U+KE;
