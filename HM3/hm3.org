@@ -1,0 +1,59 @@
+#+TITLE: 24-623 2015 HM3
+#+AUTHOR: Abhishek Bagusetty
+#+LATEX_CLASS: cmu-article
+#+OPTIONS: ^:{} # make super/subscripts only when wrapped in {}
+#+OPTIONS: toc:nil # suppress toc, so we can put it where we want
+#+OPTIONS: tex:t
+#+EXPORT_EXCLUDE_TAGS: noexport
+#+LATEX_HEADER: \usepackage[makeroom]{cancel}
+#+LATEX_HEADER: \usepackage{verbatim}
+
+\maketitle
+
+* Problem 2
+Velocities, positions and forces are the important variables allocated dynamically using double pointers. The size of the system or the number of atoms are determined dynamically. Initial velocity is randomly assigned uand scaled between -1.0 and 1.0. After the initial velocites are set certain constraints are imposed. (1). Velocities are scaled in such a way that the total momentum of the system is zero. This performed with the Eq.ref:eq:1:
+
+\begin{equation}
+v_{i} = v_{i} - \frac{1}{N}\sum_{j=1}^{N}v_{j} \label{eq:1}
+\end{equation}
+where N is the total number of atoms.
+(2). After the velocities are scaled for momentum, they are re-scaled such that the steady-state temperature of 100K is obtained for 200 units of NVE ensemble MD simulation.
+
+Pair Energies, kinetic energy, momentum, temperature and pressure of the system are flushed to for post-processing for every 500 time steps. Center of mass(COM) is computed at each time frame to prove that there is no drift and also can also be visualized from the snapshots given below.
+Periodic cell is also shown in the Fig.ref:fig:2d , Fig.ref:fig:2e for the inital and final state of teh system.
+
+Components of momentum in x,y,z directions are computed and shown in Fig.ref:fig:2b. 
+
+
+#+caption: The figure shows the plot of energy for the NVE ensemble MD simulation of LJ nano-particles over 200 units.
+#+label: fig:2a
+[[./P2/LDmj_sim_ener.png]]
+
+#+caption: The figure shows the plot of components of momentum for the NVE ensemble MD simulation.
+#+label: fig:2b
+[[./P2/LDmj_sim_mom.png]]
+
+#+caption: The figure shows the plot of instantaneous temperature and pressure in reduced units for NVE ensemble MD simulation.
+#+label: fig:2c
+[[./P2/LDmj_sim_temp_P.png]]
+
+
+#+BEGIN_LaTeX
+\begin{figure}[H]
+\begin{centering}
+\scalebox{0.35}{\includegraphics{./P2/unit0.png}}
+\caption{Snapshot taken at t=0 (units). Simulation boundaries are also shown in blue. The center of mass of the system is shown as an atom colored in red.}
+\label{fig:fig2d}
+\end{centering}
+\end{figure}
+#+END_LaTeX
+
+#+BEGIN_LaTeX
+\begin{figure}[H]
+\begin{centering}
+\scalebox{0.35}{\includegraphics{./P2/unit200.png}}
+\caption{Snapshot taken at t=200 (units). Simulation boundaries are also shown in blue. Please note that the coordinates are wrapped into the simulation cell using PBC module available in VMD for visualization purpose. The center of mass of the system is shown as an atom colored in red.}
+\label{fig:fig2e}
+\end{centering}
+\end{figure}
+#+END_LaTeX
