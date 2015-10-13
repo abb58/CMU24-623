@@ -173,7 +173,7 @@ void init(int Natoms, const char* filename){
     v[i][2] = v[i][2] - (1.0/double(Natoms))*Vz;
   }
   
-  double Tset = 1.6534; // 1.5X than 100k
+  double Tset = 1.1; // 1.5X than 100k
   calc_kenergy();
   calc_inst_temp_pr();
   double alpha = std::sqrt(Tset/T);
@@ -182,7 +182,6 @@ void init(int Natoms, const char* filename){
     v[i][1] = alpha*v[i][1];
     v[i][2] = alpha*v[i][2];
   }
-
 }
 
 //-----------------------------------------------------------------//
@@ -252,13 +251,21 @@ void calc_pairenergy()
       dx = r[i][0] - r[j][0];
       dy = r[i][1] - r[j][1];
       dz = r[i][2] - r[j][2];
+      // Apply PBC: Nearest Image Convention
+      if(dx > Hlx) dx=dx-lx;
+      if(dx <-Hlx) dx=dx+lx;
+      if(dy > Hly) dy=dy-ly;
+      if(dy <-Hly) dy=dy+ly;
+      if(dz > Hlz) dz=dz-lz;
+      if(dz <-Hlz) dz=dz+lz;
+      
       r2 = (dx*dx) + (dy*dy) + (dz*dz);
       
-      if(r2<=R2cut){
+      if(r2<R2cut){
 	r6 = r2*r2*r2;
 	Ir6 = 1/r6;
 	R=std::sqrt(r2);
-	U+=(4*((Ir6*Ir6)-Ir6)-URcut-(R-Rcut)*RIcut*(-48*RI12cut+24*RI6cut));
+	U += (4*((Ir6*Ir6)-Ir6) - URcut - (R-Rcut)*RIcut*(-48*RI12cut+24*RI6cut));
       } // r2<R2cut
     }
   }
@@ -289,6 +296,15 @@ void calc_virial_force()
       dx = r[i][0] - r[j][0];
       dy = r[i][1] - r[j][1];
       dz = r[i][2] - r[j][2];
+
+      // Apply PBC: Nearest Image Convention
+      if(dx > Hlx) dx=dx-lx;
+      if(dx <-Hlx) dx=dx+lx;
+      if(dy > Hly) dy=dy-ly;
+      if(dy <-Hly) dy=dy+ly;
+      if(dz > Hlz) dz=dz-lz;
+      if(dz <-Hlz) dz=dz+lz;
+
       r2 = (dx*dx) + (dy*dy) + (dz*dz);
 
       if(r2<R2cut){
@@ -340,7 +356,7 @@ void calc_momentum()
 
 void calc_inst_temp_pr()
 {
-  T=0.0;
+  T=0.0; P=0.0; 
   T = (2*KE)/(3.0*(Natoms-1)*KB);
   P = (Natoms*KB*T)/Vol + (1/(3*Vol) * Vir);
 }
