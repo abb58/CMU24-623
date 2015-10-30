@@ -120,3 +120,19 @@ Plot of average pressure in non-dimensional units is plotted against the density
 ** b)
 
 * Problem 3
+** a) Objectives
+   1. The objectives are very clear to predict the EACs between noble gases and graphite surfaces of different curvature.
+   2. Non-equilibrium steady-state simulations were helpful in exploring wide phase space and is insensitive to the initial conditions set.
+   3. Relating thermal boundary conductances between noble gases and graphene to EACs.
+** b) Conclusions
+   1. EAC increases with the increase in atomic mass of the noble gas and this can be attributed to heavier atoms having lower velocity resulting in longer interaction time with the CNT.
+   2. Layer-independence with respect to EAC is an interesting observation.
+   3. The profile of potential energy with respect to the gas atom distance from the CNT is predictable as it is goverened by Lennard Jones Potential but it is an interesting observation to find the depth of the gas-CNT potential increases with increase in CNT diameter. 
+   4. As the potential depth increases, the interaction between gas and CNT is strong contributing to increase in EAC.
+** c) Concerns
+   1. In the MD simulations, global thermostate is turned-off and velocity-rescaling(VR) thermostat is used to control the temperatures at the source and sink. As VR thermostat doesn't really give NVT statistics there will be fluctuations in total energy. As the entire simulation seems to be in NVT ensemble, it is not clear how comparable are the energy drift, before and after equilibration with respect to the energy accomodation coefficient.
+   2. Can Nose-Hoover thermostat be used for velocity-rescaling to maintain heat source and sink.
+** d) Review
+   1. It is very important to note that the layer-independence EAC will likely not hold true for higher translational energy gas atoms and has been identified with relevant explanation.
+   2. It would have been much more supporting, if the information is provided for the EAC independence to multi-layer CNT.
+
