@@ -1,0 +1,35 @@
+#+TITLE: 24-623 2015 HM4
+#+AUTHOR: Abhishek Bagusetty
+#+LATEX_CLASS: cmu-article
+#+OPTIONS: ^:{} # make super/subscripts only when wrapped in {}
+#+OPTIONS: toc:nil # suppress toc, so we can put it where we want
+#+OPTIONS: tex:t
+#+EXPORT_EXCLUDE_TAGS: noexport
+#+LATEX_HEADER: \usepackage[makeroom]{cancel}
+#+LATEX_HEADER: \usepackage{verbatim}
+
+\maketitle
+
+* Problem 1
+The regular equations for the velocity verlet scheme are as follows: 
+
+  1.$v_{i}(t+\Delta t/2) = v_{i}(t) + F_{i}(t) \Delta/2m_{i}$
+  2.$r_{i}(t+\Delta t) = r_{i}(t) + v_{i}(t+\Delta t/2)\Delta t$
+  3.$v_{i}(t+\Delta t) = v_{i}(t+\Delta + F_{i}(t+\Delta t) \Delta/2m_{i}$
+
+With MD simulations in NVT ensemble using the Nose-Hoover thermostat, the following are the equations of motions,
+
+  1. $$
+* Problem 2
+** a)
+
+Average Pressure is plotted as the function of density between 950 $kg/m^3$ and 1150 $kg/m^3$. A trendline is fit and the zero pressure density is found to be at 1042.8 $kg/m^3$ which slightly varies with the density computed from the previous computations corresponding to 1053.8 $kg/m^3$.
+
+1. Several NVT simulations are performed with NVT ensemble and Nose-Hoover thermostat and ensuring temperature of 100K is reached for every run.
+
+2. Equlibration is completed, as judged by the lack of energy drift in the 200 units of MD simulation. $\big\langle (E-<E>) \big\rangle$ per atom is in the order of 1e-3 which indicate the energy fluctuations are very small.
+
+Plots of energies, temeprature and pressure are shown below for a configuration approaching zero pressure NVT simulation for 200 LJ units.
+
+
+* Problem 3

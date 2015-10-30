@@ -50,7 +50,7 @@ plt.savefig('LJ-md-Ener.png',dpi=300)
 plt.show()
 
 # Temperature
-fig, ax = plt.subplots()
+fig, ax=plt.subplots()
 t_sample=data[10:,1]
 T_sample=data[10:,2]
 T_cavg=moving_avg(T_sample)

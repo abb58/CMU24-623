@@ -24,16 +24,28 @@ pz= data[:,9]
 
 # Energy
 plt.figure(1)
+plt.subplot(2,1,1)
 plt.plot(t, PE, '-b', lw=2.0, label='PE')
 plt.hold(True)
 plt.plot(t, KE, '-r', lw=2.0, label='KE')
 plt.hold(True)
 plt.plot(t, TE, '-g', lw=2.0, label='TE')
 plt.hold(True)
-plt.legend(loc='best', fontsize=16)
 plt.title('LJ Argon Liquid Simulation (Energy)', fontsize=18)
 plt.xlabel('Time, t [units]', fontsize=16)
 plt.ylabel('Energy', fontsize=16)
+# Energy Drift
+plt.subplot(2,1,2)
+TE_cavg = moving_avg(data[10:,6])
+drift = (data[10:,6] - TE_cavg)/256.0
+plt.plot(data[10:,1], drift, '-k', lw=2.0, label='Energy Drift')
+plt.hold(True)
+drift_avg = moving_avg(drift)
+print(drift_avg)
+plt.plot(data[10:,1], drift_avg, '--r', lw=2.0, label='Avg_Energy Drift')
+plt.xlabel('Time, t [units]', fontsize=16)
+plt.ylabel('Energy Drift per atom', fontsize=16)
+plt.legend(loc='best', fontsize=16)
 plt.savefig('LJ-md-Ener.png',dpi=300)
 plt.show()
 
