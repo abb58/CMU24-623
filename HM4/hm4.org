@@ -13,20 +13,20 @@
 * Problem 1
 The regular equations for the velocity verlet scheme are as follows: 
 
-  1.$v_{i}(t+\Delta t/2) = v_{i}(t) + F_{i}(t) \Delta/2m_{i}$
-  2.$r_{i}(t+\Delta t) = r_{i}(t) + v_{i}(t+\Delta t/2)\Delta t$
-  3.$v_{i}(t+\Delta t) = v_{i}(t+\Delta t)+ F_{i}(t+\Delta t) \Delta/2m_{i}$
+  1. $v_{i}(t+\Delta t/2) = v_{i}(t) + F_{i}(t) \Delta t/2m_{i}$
+  2. $r_{i}(t+\Delta t) = r_{i}(t) + v_{i}(t+\Delta t/2)\Delta t$
+  3. $v_{i}(t+\Delta t) = v_{i}(t+\Delta t)+ F_{i}(t+\Delta t) \Delta t/2m_{i}$
 
 With MD simulations in NVT ensemble using the Nose-Hoover thermostat, the following are the equations of motions,
 
   1. $\dot{r_{i}} = \mathbf{v_{i}}$
   2. $\dot{\mathbf{v_{i}}} = \mathbf{F_{i}}/m_{i} - \eta \mathbf{v_{i}}$
-  3. $\eta = \frac{1}{\tau^2_{T}} \Big(\frac{T}{T_{set} -1} \Big)$
+  3. $\eta = \frac{1}{\tau^2_{T}} \Big(\frac{T}{T_{set}} -1 \Big)$
 
 Now replacing the acceleration term with the above equations of motion.
 
 \begin{equation}
-  v_{i}(t+\Delta t/2) = v_{i}(t) + \mathbf{F_{i}(t)/m_{i}} \Delta/2
+  v_{i}(t+\Delta t/2) = v_{i}(t) + (\mathbf{F_{i}(t)/m_{i}}) \Delta t/2
   \label{eq:eq1}
 \end{equation}
 
@@ -34,43 +34,57 @@ Now replacing the acceleration term with the above equations of motion.
 F_{i}(t)/m_{i} = a_{i} \implies \dot{\mathbf{v_{i}}} = \mathbf{F_{i}}/m_{i} - \eta \mathbf{v_{i}}
 \end{equation}
 
-Now substitute the above equation in ref:eq:eq1,
+Now substitute the above equation in original Step 3,
 \begin{equation}
-\boxed{ v_{i}(t+\Delta t/2) = v_{i}(t) + [\mathbf{F_{i}}/m_{i} - \eta \mathbf{v_{i}(t)}] \Delta/2 }
+\boxed{ v_{i}(t+\Delta t/2) = v_{i}(t) + [\mathbf{F_{i}}/m_{i} - \eta(t) \mathbf{v_{i}(t)}] \Delta/2 }
 \end{equation}
 
-The step 2 for the evolution of position remains the same as the actual expression.
+The Step 2 for the evolution of position remains the same as the actual expression.
 
-The Step 3 is affecte by the $F_{i}(t+\Delta t)/m_{i}$, which is the acceleration at $(t+\Delta t)$
+The Step 3 is driven by the $F_{i}(t+\Delta t)/m_{i}$, which is the acceleration at $(t+\Delta t)$
 
 \begin{equation}
-  v_{i}(t+\Delta t) = v_{i}(t+\Delta t) + F_{i}(t+\Delta t) \Delta/2m_{i}
+  v_{i}(t+\Delta t) = v_{i}(t+\Delta t/2) + F_{i}(t+\Delta t) \Delta t/2m_{i}
   \label{eq:eq2}
 \end{equation}
 If we replace the force term at $(t+\Delta t)$ from the Step 3 with the modified equations of motions as follows,
 
-$ \dot{\mathbf{v_{i}(t+\Delta t)}} = \mathbf{F_{i}(t+\Delta t)}/m_{i} - \eta(t+\Delta t) \mathbf{v_{i}(t+\Delta t)} $
-
+\begin{equation}
+\dot{\mathbf{v_{i}}}(t+\Delta t) = \mathbf{F_{i}(t+\Delta t)}/m_{i} - \eta(t+\Delta t) \mathbf{v_{i}(t+\Delta t)}
+\end{equation}
 Substitute the above expression in ref:eq:eq2, would give
 
 \begin{equation}
-  v_{i}(t+\Delta t) = v_{i}(t+\Delta t) + [\mathbf{F_{i}(t+\Delta t)}/m_{i} - \eta(t+\Delta t) \mathbf{v_{i}(t+\Delta t)}] \Delta/2
+  v_{i}(t+\Delta t) = v_{i}(t+\Delta t) + [\mathbf{F_{i}(t+\Delta t)}/m_{i} - \eta(t+\Delta t) \mathbf{v_{i}(t+\Delta t)}] \Delta t/2
   \label{eq:eq3}
 \end{equation}
 
-Rearraning the expression results in ,
+Rearranging the expression results in,
 
 \begin{equation}
-  v_{i}(t+\Delta t) = v_{i}(t+\Delta t) + F_{i}(t+\Delta t) \Delta/(2m_{i}) - v_{i}(t+\Delta t) \eta(t+\Delta t)\Delta/2
-\end{equation}
-
-
-\begin{equation}
-  v_{i}(t+\Delta t)\Big(1 - \eta(t+\Delta t)\Delta/2 \Big) = v_{i}(t+\Delta t) + F_{i}(t+\Delta t) \Delta/(2m_{i})
+  v_{i}(t+\Delta t) = v_{i}(t+\Delta t) + F_{i}(t+\Delta t) \Delta t/(2m_{i}) - v_{i}(t+\Delta t) \eta(t+\Delta t)\Delta t/2
 \end{equation}
 
 \begin{equation}
-\bixed{ v_{i}(t+\Delta t) = \frac{v_{i}(t+\Delta t) + F_{i}(t+\Delta t) \Delta/(2m_{i})}{1 - \eta(t+\Delta t)\Delta/2} } 
+  v_{i}(t+\Delta t)\Big(1 + \eta(t+\Delta t)\Delta t/2 \Big) = v_{i}(t+\Delta t) + F_{i}(t+\Delta t) \Delta t/(2m_{i})
+\end{equation}
+
+\begin{equation}
+\boxed{ \mathbf{v}_{i}(t+\Delta t) = \frac{\mathbf{v}_{i}(t+\Delta t) + \mathbf{F}_{i}(t+\Delta t) \Delta/(2m_{i})}{1 + \eta(t+\Delta t)\Delta t/2} } 
+\end{equation}
+
+Note that the $\eta(t+\Delta t)$ is obtained from the modified equation of motion using simple forward difference rule:
+
+\begin{equation}
+\dot{\eta} = \frac{d\eta}{dt} = \frac{1}{\tau^2_{T}} \Big(\frac{T}{T_{set}} - 1\Big)
+\end{equation}
+
+\begin{equation}
+\frac{\eta(t+\Delta t) - \eta(t)}{\Delta t} = \frac{1}{\tau^2_{T}} \Big(\frac{T}{T_{set}} - 1\Big) 
+\end{equation}
+
+\begin{equation}
+\boxed{ \eta(t+\Delta t) = \eta(t) + \frac{\Delta t}{\tau^2_{T}} \Big(\frac{T}{T_{set}} - 1\Big) }
 \end{equation}
 
 * Problem 2
@@ -80,9 +94,29 @@ Average Pressure is plotted as the function of density between 950 $kg/m^3$ and 
 
 1. Several NVT simulations are performed with NVT ensemble and Nose-Hoover thermostat and ensuring temperature of 100K is reached for every run.
 
-2. Equlibration is completed, as judged by the lack of energy drift in the 200 units of MD simulation. $\big\langle (E-<E>) \big\rangle$ per atom is in the order of 1e-3 which indicate the energy fluctuations are very small.
+2. Equlibration is completed, as judged by the lack of energy drift in the 200 units of MD simulation. $\big\langle (E-\langle E \rangle) \big\rangle$ per atom is in the order of 1e-3 which indicate the energy fluctuations are very small.
 
-Plots of energies, temeprature and pressure are shown below for a configuration approaching zero pressure NVT simulation for 200 LJ units.
+Plots of energies, temeprature and pressure are shown below for a configuration approaching zero pressure NVT simulation for 200 LJ units. Plots for all other configurations can be found in the submission file. The plots are shown in Figs.ref:fig:P2a1, ref:fig:P2a2, ref:fig:P2a3 respectively.
 
+#+caption: The figure shows the time evolution of energy and energy drift showing the equilibration of the system
+#+label: fig:P2a1
+[[./V-4/LJ-md-Ener.png]]
+
+#+caption: The figure shows the time evolution of temeprature and the equilibration of average temperature to 100K.
+#+label: fig:P2a2
+[[./V-4/LJ-md-Temp.png]]
+
+#+caption: The figure shows the time evolution of Pressure and its closest approach to zero pressure.
+#+label: fig:P2a3
+[[./V-4/LJ-md-Pressure.png]]
+
+Plot of average pressure in non-dimensional units is plotted against the density and a trendline is fit as shown below in Fig.ref:fig:P2a
+
+#+caption: The figure shows the plot of average pressure as a function of density.
+#+label: fig:P2a
+[[./HM4-P2a.jpg]]
+
+
+** b)
 
 * Problem 3

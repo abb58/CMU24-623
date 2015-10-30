@@ -50,13 +50,14 @@ plt.savefig('LJ-md-Ener.png',dpi=300)
 plt.show()
 
 # Temperature
-plt.figure(2)
+fig, ax=plt.subplots()
 t_sample=data[10:,1]
 T_sample=data[10:,2]
 T_cavg=moving_avg(T_sample)
-plt.plot(t, T, '-b', lw=2.0, label='inst.T')
+ax.plot(t, T, '-b', lw=2.0, label='inst.T')
 plt.hold(True)
-plt.plot(t_sample, T_cavg, '-r', lw=2.0, label='Avg.T')
+ax.plot(t_sample, T_cavg, '-r', lw=2.0, label='Avg.T')
+ax.ticklabel_format(useOffset=False)
 plt.legend(loc='best', fontsize=16)
 plt.title('LJ Argon Liquid Simulation (Temperature)', fontsize=18)
 plt.xlabel('Time, t [units]',fontsize=16)
