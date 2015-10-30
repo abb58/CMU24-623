@@ -15,11 +15,64 @@ The regular equations for the velocity verlet scheme are as follows:
 
   1.$v_{i}(t+\Delta t/2) = v_{i}(t) + F_{i}(t) \Delta/2m_{i}$
   2.$r_{i}(t+\Delta t) = r_{i}(t) + v_{i}(t+\Delta t/2)\Delta t$
-  3.$v_{i}(t+\Delta t) = v_{i}(t+\Delta + F_{i}(t+\Delta t) \Delta/2m_{i}$
+  3.$v_{i}(t+\Delta t) = v_{i}(t+\Delta t)+ F_{i}(t+\Delta t) \Delta/2m_{i}$
 
 With MD simulations in NVT ensemble using the Nose-Hoover thermostat, the following are the equations of motions,
 
-  1. $$
+  1. $\dot{r_{i}} = \mathbf{v_{i}}$
+  2. $\dot{\mathbf{v_{i}}} = \mathbf{F_{i}}/m_{i} - \eta \mathbf{v_{i}}$
+  3. $\eta = \frac{1}{\tau^2_{T}} \Big(\frac{T}{T_{set} -1} \Big)$
+
+Now replacing the acceleration term with the above equations of motion.
+
+\begin{equation}
+  v_{i}(t+\Delta t/2) = v_{i}(t) + \mathbf{F_{i}(t)/m_{i}} \Delta/2
+  \label{eq:eq1}
+\end{equation}
+
+\begin{equation}
+F_{i}(t)/m_{i} = a_{i} \implies \dot{\mathbf{v_{i}}} = \mathbf{F_{i}}/m_{i} - \eta \mathbf{v_{i}}
+\end{equation}
+
+Now substitute the above equation in ref:eq:eq1,
+\begin{equation}
+\boxed{ v_{i}(t+\Delta t/2) = v_{i}(t) + [\mathbf{F_{i}}/m_{i} - \eta \mathbf{v_{i}(t)}] \Delta/2 }
+\end{equation}
+
+The step 2 for the evolution of position remains the same as the actual expression.
+
+The Step 3 is affecte by the $F_{i}(t+\Delta t)/m_{i}$, which is the acceleration at $(t+\Delta t)$
+
+\begin{equation}
+  v_{i}(t+\Delta t) = v_{i}(t+\Delta t) + F_{i}(t+\Delta t) \Delta/2m_{i}
+  \label{eq:eq2}
+\end{equation}
+If we replace the force term at $(t+\Delta t)$ from the Step 3 with the modified equations of motions as follows,
+
+$ \dot{\mathbf{v_{i}(t+\Delta t)}} = \mathbf{F_{i}(t+\Delta t)}/m_{i} - \eta(t+\Delta t) \mathbf{v_{i}(t+\Delta t)} $
+
+Substitute the above expression in ref:eq:eq2, would give
+
+\begin{equation}
+  v_{i}(t+\Delta t) = v_{i}(t+\Delta t) + [\mathbf{F_{i}(t+\Delta t)}/m_{i} - \eta(t+\Delta t) \mathbf{v_{i}(t+\Delta t)}] \Delta/2
+  \label{eq:eq3}
+\end{equation}
+
+Rearraning the expression results in ,
+
+\begin{equation}
+  v_{i}(t+\Delta t) = v_{i}(t+\Delta t) + F_{i}(t+\Delta t) \Delta/(2m_{i}) - v_{i}(t+\Delta t) \eta(t+\Delta t)\Delta/2
+\end{equation}
+
+
+\begin{equation}
+  v_{i}(t+\Delta t)\Big(1 - \eta(t+\Delta t)\Delta/2 \Big) = v_{i}(t+\Delta t) + F_{i}(t+\Delta t) \Delta/(2m_{i})
+\end{equation}
+
+\begin{equation}
+\bixed{ v_{i}(t+\Delta t) = \frac{v_{i}(t+\Delta t) + F_{i}(t+\Delta t) \Delta/(2m_{i})}{1 - \eta(t+\Delta t)\Delta/2} } 
+\end{equation}
+
 * Problem 2
 ** a)
 
