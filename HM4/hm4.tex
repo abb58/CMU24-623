@@ -1,4 +1,4 @@
-% Created 2015-10-29 Thu 23:42
+% Created 2015-10-30 Fri 21:17
 \documentclass{article}
 \usepackage[top=1in, bottom=1.in, left=1in, right=1in]{geometry}
   \usepackage[makeroom]{cancel}
@@ -161,9 +161,79 @@ Plot of average pressure in non-dimensional units is plotted against the density
 \caption{\label{fig:P2a}The figure shows the plot of average pressure as a function of density.}
 \end{figure}
 
+\subsection{b)}
+\label{sec-2-2}
+To compute the heat capacity of argon, the following expression is being used,
 
+\begin{equation}
+\langle T \rangle = \Big[\frac{\big \langle(E-\langle E \rangle)^2 \big \rangle}{3(N-1)k_{B}c_{v}}\Big]^{1/2}
+\end{equation}
+
+From the above equation, $c_{v}$ is the heat capacity per atom at constant volume. As there are N atoms, the heat capacity of the system is given by :
+
+\begin{equation}
+C_{v,system} = \frac{\big \langle(E-\langle E \rangle)^2 \big \rangle}{k_{B}\langle T \rangle^{2}}
+\end{equation}
+
+where k$_{\text{B}}$ is boltzmann constant = 1.3806488e-23 J/K and the $\langle T \rangle = 100K$. Energy from the simulation has to be converted from LJ units to SI units using $\epsilon = 1.67e-21 J$.
+
+For computing the heat capacity of the system, the lattice dimensions are found from the zero pressure density from the Fig.\ref{fig:P2a}. Using the density, volume is found and subsequently lattice length is found to be 7.47. Sufficiently long simulation is carried out such that the $\langle T \rangle = 100K$ as can be seen from the Fig:\ref{fig:P3b}. It is striking to see the average temperature(Fig.\ref{fig:P3b}), pressure(Fig.\ref{fig:P3c}) and the energy drift(Fig.\ref{fig:P3a}) converges well from all fluctuations.
+
+\begin{figure}[htb]
+\centering
+\includegraphics[width=.9\linewidth]{./heat-capacity/LJ-md-Ener.png}
+\caption{\label{fig:P3a}The figure shows the plot of time variation of energy over 400 units}
+\end{figure}
+
+\begin{figure}[htb]
+\centering
+\includegraphics[width=.9\linewidth]{./heat-capacity/LJ-md-Temp.png}
+\caption{\label{fig:P3b}The figure shows the plot of average temperature approaching 100K on the time scale of 400 units}
+\end{figure}
+
+\begin{figure}[htb]
+\centering
+\includegraphics[width=.9\linewidth]{./heat-capacity/LJ-md-Pressure.png}
+\caption{\label{fig:P3c}The figure shows the confirmation of zero pressure density for 400 units}
+\end{figure}
+
+After finding the mean of energy fluctuations, heat capacity of the system at constant volume is found to be:
+
+\begin{equation}
+C_{v,system} = \frac{255.29954 \times (1.67e-21)^{2} (J^2)}{ 1.3806488e-23 (J/K) \times 100^{2} (K^{2}) }
+\end{equation}
+
+Heat capacity is in the units of J/K and it is converted to J/Kg-K by using mass of 256 particles. 
+The specific heat of the argon is found to be 303.8409 J/Kg-k.
 
 \section{Problem 3}
 \label{sec-3}
+\subsection{a) Objectives}
+\label{sec-3-1}
+\begin{enumerate}
+\item The objectives are very clear to predict the EACs between noble gases and graphite surfaces of different curvature.
+\item Non-equilibrium steady-state simulations were helpful in exploring wide phase space and is insensitive to the initial conditions set.
+\item Relating thermal boundary conductances between noble gases and graphene to EACs.
+\end{enumerate}
+\subsection{b) Conclusions}
+\label{sec-3-2}
+\begin{enumerate}
+\item EAC increases with the increase in atomic mass of the noble gas and this can be attributed to heavier atoms having lower velocity resulting in longer interaction time with the CNT.
+\item Layer-independence with respect to EAC is an interesting observation.
+\item The profile of potential energy with respect to the gas atom distance from the CNT is predictable as it is goverened by Lennard Jones Potential but it is an interesting observation to find the depth of the gas-CNT potential increases with increase in CNT diameter.
+\item As the potential depth increases, the interaction between gas and CNT is strong contributing to increase in EAC.
+\end{enumerate}
+\subsection{c) Concerns}
+\label{sec-3-3}
+\begin{enumerate}
+\item In the MD simulations, global thermostate is turned-off and velocity-rescaling(VR) thermostat is used to control the temperatures at the source and sink. As VR thermostat doesn't really give NVT statistics there will be fluctuations in total energy. As the entire simulation seems to be in NVT ensemble, it is not clear how comparable are the energy drift, before and after equilibration with respect to the energy accomodation coefficient.
+\item Can Nose-Hoover thermostat be used for velocity-rescaling to maintain heat source and sink.
+\end{enumerate}
+\subsection{d) Review}
+\label{sec-3-4}
+\begin{enumerate}
+\item It is very important to note that the layer-independence EAC will likely not hold true for higher translational energy gas atoms and has been identified with relevant explanation.
+\item It would have been much more supporting, if the information is provided for the EAC independence to multi-layer CNT.
+\end{enumerate}
 % Emacs 24.5.1 (Org mode 8.2.10)
 \end{document}

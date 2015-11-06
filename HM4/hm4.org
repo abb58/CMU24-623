@@ -116,8 +116,43 @@ Plot of average pressure in non-dimensional units is plotted against the density
 #+label: fig:P2a
 [[./HM4-P2a.jpg]]
 
-
 ** b)
+To compute the heat capacity of argon, the following expression is being used,
+
+\begin{equation}
+\langle T \rangle = \Big[\frac{\big \langle(E-\langle E \rangle)^2 \big \rangle}{3(N-1)k_{B}c_{v}}\Big]^{1/2}
+\end{equation}
+
+From the above equation, $c_{v}$ is the heat capacity per atom at constant volume. As there are N atoms, the heat capacity of the system is given by :
+
+\begin{equation}
+C_{v,system} = \frac{\big \langle(E-\langle E \rangle)^2 \big \rangle}{k_{B}\langle T \rangle^{2}}
+\end{equation}
+
+where k_{B} is boltzmann constant = 1.3806488e-23 J/K and the $\langle T \rangle = 100K$. Energy from the simulation has to be converted from LJ units to SI units using $\epsilon = 1.67e-21 J$.
+
+For computing the heat capacity of the system, the lattice dimensions are found from the zero pressure density from the Fig.ref:fig:P2a. Using the density, volume is found and subsequently lattice length is found to be 7.47. Sufficiently long simulation is carried out such that the $\langle T \rangle = 100K$ as can be seen from the Fig:ref:fig:P3b. It is striking to see the average temperature(Fig.ref:fig:P3b), pressure(Fig.ref:fig:P3c) and the energy drift(Fig.ref:fig:P3a) converges well from all fluctuations.
+
+#+caption: The figure shows the plot of time variation of energy over 400 units
+#+label: fig:P3a
+[[./heat-capacity/LJ-md-Ener.png]]
+
+#+caption: The figure shows the plot of average temperature approaching 100K on the time scale of 400 units
+#+label: fig:P3b
+[[./heat-capacity/LJ-md-Temp.png]]
+
+#+caption: The figure shows the confirmation of zero pressure density for 400 units
+#+label: fig:P3c
+[[./heat-capacity/LJ-md-Pressure.png]]
+
+After finding the mean of energy fluctuations, heat capacity of the system at constant volume is found to be:
+
+\begin{equation}
+C_{v,system} = \frac{255.29954 \times (1.67e-21)^{2} (J^2)}{ 1.3806488e-23 (J/K) \times 100^{2} (K^{2}) }
+\end{equation}
+
+Heat capacity is in the units of J/K and it is converted to J/Kg-K by using mass of 256 particles. 
+The specific heat of the argon is found to be 303.8409 J/Kg-k.
 
 * Problem 3
 ** a) Objectives
