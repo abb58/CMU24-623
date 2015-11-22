@@ -1,0 +1,27 @@
+This is 8-bit Big BibTeX version 0.99d
+Implementation:  C for Unix
+Release version: 3.71 (18 mar 2013)
+
+The 8-bit codepage and sorting file: 88591lat.csf
+The top-level auxiliary file: ./case-study-report.aux
+The style file: unsrt.bst
+White space in argument---line 24 of file ./case-study-report.aux
+ : \bibdata{/Users/abhimac/Box
+ :                             Sync/Classes/CMU24-623/case\unhbox \voidb@x \penalty \@M \hskip \z@skip \T1\textunderscore \discretionary {-}{}{}\penalty \@M \hskip \z@skip study/references}
+I'm skipping whatever remains of this command
+I found no database files---while reading file ./case-study-report.aux
+Reallocated glb_str_ptr (elt_size=8) to 10 items from 0.
+Reallocated global_strs (elt_size=20001) to 10 items from 0.
+Reallocated glb_str_end (elt_size=8) to 10 items from 0.
+Warning--I didn't find a database entry for "brenner-2002-rebo"
+Warning--I didn't find a database entry for "knight-2012-multis"
+Warning--I didn't find a database entry for "devanathan-2007-atomis-simul"
+
+Here's how much of BibTeX's memory you used:
+ Cites:                 0 out of 750
+ Fields:               46 out of 5000
+ Hash table:        35186 out of 35307
+ Strings:             445 out of 35307
+ Free string pool:   3582 out of 65000
+ Wizard functions:   1791 out of 3000
+(There were 2 error messages)

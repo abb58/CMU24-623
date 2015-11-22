@@ -1,0 +1,66 @@
+% Created 2015-11-16 Mon 20:03
+\documentclass{article}
+\usepackage[top=1in, bottom=1.in, left=1in, right=1in]{geometry}
+  
+
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[T1]{fontenc}
+\usepackage{fixltx2e}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{float}
+\usepackage{wrapfig}
+\usepackage{rotating}
+\usepackage[normalem]{ulem}
+\usepackage{amsmath}
+\usepackage{textcomp}
+\usepackage{marvosym}
+\usepackage{wasysym}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage[version=3]{mhchem}
+\usepackage[numbers,super,sort&compress]{natbib}
+\usepackage{natmove}
+\usepackage{url}
+\usepackage{minted}
+\usepackage{underscore}
+\usepackage[linktocpage,pdfstartview=FitH,colorlinks,
+linkcolor=blue,anchorcolor=blue,
+citecolor=blue,filecolor=blue,menucolor=blue,urlcolor=blue]{hyperref}
+\usepackage{attachfile}
+\author{Abhishek Bagusetty}
+\date{\today}
+\title{Modeling Proton Transport in Functionalized Graphene}
+\begin{document}
+
+\maketitle
+
+\section{Problem Statement}
+\label{sec-1}
+Modeling of proton transport in fuel cells has been extensively studied and the limitations involved is the high temperature applications. As the proton transport involves water channels, limited presence of water would seriouly affect the performance of a fuel cells. Modeling of proton transport on the surface of a functionalized graphene would effectively provide a solution to limited hydration conditions using molecular simulations.
+
+\section{Proposed Work}
+\label{sec-2}
+Modeling of proton transport for fuel cell applications is very prominent using electronic structure calculations but restricts exploring larger system size and longer time scales. Majority of the classical simulations or the potentials doesn't describe bond-making and bond-breaking phenomena. The proposed work would systematically analyzing a reactive potential that describes bond-making and breaking. This is followed by evaluating a reactive molecular dynamics framework that would involve 
+
+\subsection{Reactive Potential}
+\label{sec-2-1}
+Some of the important contributions in modeling hydrocarbon molecule based systems involving bond breaking and making has been described by reactive empirical bond order (REBO) potential. A revised potential contains improved analytic functions will be studied \cite{brenner-2002-rebo} and its prospective applications in understanding proton transport phenomena will be analyzed. 
+
+\subsection{Reactive Molecular Dynamics}
+\label{sec-2-2}
+After studying a reactive potential, an alternate method \cite{knight-2012-multis} will be reviewed that involve developing a reactive molecular dynamics model that do not require predefined empirical functions. The methods involving parametering simple analytical functions of the potentials that describes proton transport in water is studied and its application to study proton transport to a functionalized graphene based system will be explored.
+
+\subsection{Applications}
+\label{sec-2-3}
+Simulation of a proton exchange membrane called Nafion is studied \cite{devanathan-2007-atomis-simul} using classical molecular dynamics simulations. This material also involves proton transport and the review discusses the simulation details and also the concerned analysis involved in a charge transport system.
+
+
+\section{Bibliography}
+\label{sec-3}
+\bibliographystyle{unsrt}
+
+\bibliography{/Users/abhimac/Box Sync/Classes/CMU24-623/case_study/references}
+% Emacs 24.4.1 (Org mode 8.2.10)
+\end{document}
