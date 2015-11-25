@@ -22,6 +22,7 @@
 #include <iomanip>
 
 // Function definitions
+void compute_U_init();
 void compute_trial_params();
 double compute_U();
 void calc_virial_force();
@@ -181,8 +182,7 @@ void init(int Natoms, const char* filename){
  */
 void apply_metropolis()
 {
-  if(U_trial < U){ // Accept the move
-
+  if(delU < 0){ // Accept the move
     for(int i=0; i<Natoms; i++){
       r[i][0] = r_trial[i][0];
       r[i][1] = r_trial[i][1];
@@ -212,10 +212,28 @@ void apply_metropolis()
 
 //-----------------------------------------------------------------//
 
+double compute_U_init()
+{
+  for(int i=0; i<Natoms; i++){
+    for(int j=i; i<Natoms; j++){
+      dx = r[i][0] - r[j][0];
+      dy = r[i][1] - r[j][1];
+      dz = r[i][2] - r[j][2];
+      dr = std::sqrt( (dx*dx)+(dy*dy)+(dz*dz) );
+      dr2 = dr*dr;
+      dr6 = dr2*dr2*dr2;
+      dr12= dr6*dr6;
+
+      U_init = 4.0*(1/dr12       - 1/dr6);
+    }
+  }
+}
+
+//-----------------------------------------------------------------//
+
 double compute_delU()
 {
   delU = 0.0;
-  
   for(int i=0; i<Natoms; i++){
     if(atomID!=i){
       dx_trial = r_trial[i][0] - r_trial[atomID][0];
@@ -234,14 +252,15 @@ double compute_delU()
       dr6 = dr2*dr2*dr2;
       dr12= dr6*dr6;
 
-      U_new = 4.0*(1/dr12_trial - 1/dr6_trial);
-      U_old = 4.0*(1/dr12       - 1/dr6);
+      U_trial = 4.0*(1/dr12_trial - 1/dr6_trial);
+      U       = 4.0*(1/dr12       - 1/dr6);
       delU += (U_new - U_old); 
     }
   }
-
 }
-  
+
+//-----------------------------------------------------------------//
+
 // double compute_U()
 // {
 //   // Before calculating energy, make sure to rezero them
@@ -387,6 +406,9 @@ int main(int argc, char** argv)
 
   for(int k=0; k<nmoves; k++){
 
+    // Compute_U_initial
+    compute_U_init();
+    
     // Compute trial moves
     compute_trial_params();
 
