@@ -16,18 +16,22 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <cmath>
 #include <ctime>
 #include <cstdlib>
 #include <iomanip>
+#include <stdexcept>
 
 // Function definitions
-void compute_U_init();
-void compute_trial_params();
 double compute_U();
+void compute_delU();
+void compute_trial_params();
 void calc_virial_force();
-void calc_inst_temp_pr();
-void vv_scheme();
+void calc_inst_pressure();
+
+
+double U_post=0.0, U_pre=0.0;
 
 double elapsed_time=0.0;
 double dt=0.002;
@@ -37,25 +41,23 @@ int Natoms;
 int nmoves=100000;
 double beta=0.0;
 double T=100; //K
-double *m=NULL;
 double R=0.0, Rcut=2.5;
 double dx_rand, dy_rand, dz_rand, d_max=0.5;
 double R2cut=0.0, RIcut=0.0, RI2cut=0.0, RI6cut=0.0, RI12cut=0.0;
 double **r=NULL, **r_trial=NULL,  **f=NULL;
-double **r_old=NULL;
 double lx=6.8, ly=6.8, lz=6.8;
 double Hlx=0.5*lx, Hly=0.5*ly, Hlz=0.5*lz;
 double Vir=0.0, Vol=0.0;
 double KB=1.0, P=0.0;
+double delU=0.0, DU=0.0;
 int count_acc=0;
 double eps = 0.0;
 double acc = 0.0;
 
 // Energy and force calculation variables
-double U=0.0, U_trial=0.0;
+double U_init=0.0, U=0.0;
 double dx=0.0, dy=0.0, dz=0.0;
 double r2=0.0, r6=0.0, Ir6=0.0;
-
 double fcut=0.0, fijx=0.0, fijy=0.0, fijz=0.0, F=0.0;
 
 //-----------------------------------------------------------------//
@@ -65,7 +67,7 @@ double fcut=0.0, fijx=0.0, fijy=0.0, fijz=0.0, F=0.0;
 void write_xyz(std::ofstream& simFile, int config)
 {
   double Xcom=0.0, Ycom=0.0, Zcom=0.0;
-  simFile << "    " << Natoms+1 << std::endl;
+  simFile << "    " << Natoms << std::endl;
   simFile << " i =  " << config << std::endl;
   for(int i=0; i<Natoms; i++) {
     simFile << "Ar" << std::setw(15) << r[i][0] << std::setw(20) << r[i][1] << std::setw(20) << r[i][2] << std::endl;
@@ -126,20 +128,33 @@ void read_xyz(const int Natoms, const char* filename)
 
 //-----------------------------------------------------------------//
 /*
- * brief - initialize the positions by reading the inputs.
- *
+ * brief - Select an atom randomly [0-255] and perturb it in 
+ *         x, y, z directions by dx,dy,dz.
  */
 void compute_trial_params(){
-  // intialize the random seed !
-  srand (time(NULL));
-
+  
   // Set the perturbations (-1,1)
   dx_rand = d_max * (2.0*(double(rand())/double(RAND_MAX)) - 1.0);
   dy_rand = d_max * (2.0*(double(rand())/double(RAND_MAX)) - 1.0);
   dz_rand = d_max * (2.0*(double(rand())/double(RAND_MAX)) - 1.0);
 
-  // Randomly select an atom
-  atomID = rand()%256;
+  // Randomly select an atom (Just to make sure that the rand no is not same as the last one)
+  int temp_atomID=0;
+  bool foundatom=false;
+  while(!foundatom){
+    temp_atomID = rand()%Natoms;
+    if(temp_atomID != atomID) {
+      foundatom = true;
+      atomID = temp_atomID;
+    }
+  }
+  if(atomID > Natoms){
+    std::ostringstream msg;
+    msg << __LINE__ << " : " << __FILE__ << std::endl
+	<< "Error ! Trying to randomly move an atom that doesn't exist. [atomID] :"  << atomID << std::endl;
+    throw std::runtime_error( msg.str() );
+  }
+  
   for(int i=0; i<Natoms; i++){
     if( atomID==i ){
       r_trial[atomID][0] = r[atomID][0] + dx_rand;
@@ -151,6 +166,14 @@ void compute_trial_params(){
       r_trial[i][1] = r[i][1];
       r_trial[i][2] = r[i][2];
     }
+
+    // Apply PBC
+    if(r_trial[i][0] <  0) r_trial[i][0] = r_trial[i][0] + lx;
+    if(r_trial[i][0] > lx) r_trial[i][0] = r_trial[i][0] - lx;
+    if(r_trial[i][1] <  0) r_trial[i][1] = r_trial[i][1] + ly;
+    if(r_trial[i][1] > ly) r_trial[i][1] = r_trial[i][1] - ly;
+    if(r_trial[i][2] <  0) r_trial[i][2] = r_trial[i][2] + lz;
+    if(r_trial[i][2] > lz) r_trial[i][2] = r_trial[i][2] - lz;
   }
 }
 
@@ -182,128 +205,128 @@ void init(int Natoms, const char* filename){
  */
 void apply_metropolis()
 {
-  if(delU < 0){ // Accept the move
+
+  if(delU<0){ // Accept the move
+    // Update the positions
     for(int i=0; i<Natoms; i++){
       r[i][0] = r_trial[i][0];
       r[i][1] = r_trial[i][1];
       r[i][2] = r_trial[i][2];
     }
-    U = U_trial;
+    U = compute_U();
   }
   else{
     eps = double(rand())/double(RAND_MAX);
-    acc = exp(-beta*(U_trial - U));
+    acc = exp(-beta*(U_post-U_pre));
     if(eps <= acc){ // Accept
-      count_acc = count_acc + 1;
+      count_acc++;
 
       for(int i=0; i<Natoms; i++){
 	r[i][0] = r_trial[i][0];
 	r[i][1] = r_trial[i][1];
 	r[i][2] = r_trial[i][2];
       }
-      U = U_trial;
+      U = compute_U();
     }
-    // else{ // Reject
-    //   x = x;
-    //   U = U;
-    // }
+    else{ // Reject
+      U = compute_U();
+    }
   }
 }
 
 //-----------------------------------------------------------------//
+// void compute_preU()
+// {
+//   U_pre = 0.0;
+//   double dx, dy, dz, dr2, dr6, dr12;
+//   for(int i=0; i<Natoms; i++){
+//     for(int j=i+1; j<Natoms; j++){
+//       dx = r[i][0] - r[j][0];
+//       dy = r[i][1] - r[j][1];
+//       dz = r[i][2] - r[j][2];
+//       dr2 = (dx*dx)+(dy*dy)+(dz*dz);
+//       dr6 = dr2*dr2*dr2;
+//       dr12= dr6*dr6;
 
-double compute_U_init()
+//       U_pre += 4.0*((1.0/dr12) - (1.0/dr6));
+//     }
+//   }
+// }
+
+// void compute_postU()
+// {
+//   U_post=0.0;
+//   double dx, dy, dz, dr2, dr6, dr12;
+//   for(int i=0; i<Natoms; i++){
+//     for(int j=i+1; j<Natoms; j++){
+//       dx = r_trial[i][0] - r_trial[j][0];
+//       dy = r_trial[i][1] - r_trial[j][1];
+//       dz = r_trial[i][2] - r_trial[j][2];
+//       dr2 = (dx*dx)+(dy*dy)+(dz*dz);
+//       dr6 = dr2*dr2*dr2;
+//       dr12= dr6*dr6;
+
+//       U_post += 4.0*((1.0/dr12) - (1.0/dr6));
+//     }
+//   }
+// }
+
+double compute_U()
 {
+  U_init = 0.0;
+  double dx=0.0, dy=0.0, dz=0.0, dr2=0.0, Idr6=0.0;
   for(int i=0; i<Natoms; i++){
-    for(int j=i; i<Natoms; j++){
+    for(int j=i+1; j<Natoms; j++){
       dx = r[i][0] - r[j][0];
       dy = r[i][1] - r[j][1];
       dz = r[i][2] - r[j][2];
-      dr = std::sqrt( (dx*dx)+(dy*dy)+(dz*dz) );
-      dr2 = dr*dr;
-      dr6 = dr2*dr2*dr2;
-      dr12= dr6*dr6;
+      dr2 = (dx*dx)+(dy*dy)+(dz*dz);
+      Idr6 = 1/(dr2*dr2*dr2);
 
-      U_init = 4.0*(1/dr12       - 1/dr6);
+      U_init += 4.0*(Idr6*Idr6 - Idr6);
     }
   }
+  return U_init;
 }
 
 //-----------------------------------------------------------------//
 
-double compute_delU()
+void compute_delU()
 {
+  // abhi : There is some problem with delU
+  double U_trial=0.0, U_old=0.0;
+  double dx_trial,dy_trial,dz_trial,dr2_trial,dr6_trial,dr12_trial;
+  double dx,dy,dz,dr2,dr6,dr12;;
   delU = 0.0;
+
   for(int i=0; i<Natoms; i++){
     if(atomID!=i){
       dx_trial = r_trial[i][0] - r_trial[atomID][0];
       dy_trial = r_trial[i][1] - r_trial[atomID][1];
       dz_trial = r_trial[i][2] - r_trial[atomID][2];
-      dr_trial = std::sqrt( (dx_trial*dx_trial)+(dy_trial*dy_trial)+(dz_trial*dz_trial) );
-      dr2_trial = dr_trial*dr_trial;
+      dr2_trial = (dx_trial*dx_trial)+(dy_trial*dy_trial)+(dz_trial*dz_trial);
       dr6_trial = dr2_trial*dr2_trial*dr2_trial;
       dr12_trial= dr6_trial*dr6_trial;
       
-      dx = r[i][0] - r[atomID][0];
-      dy = r[i][1] - r[atomID][1];
-      dz = r[i][2] - r[atomID][2];
-      dr = std::sqrt( (dx*dx)+(dy*dy)+(dz*dz) );
-      dr2 = dr*dr;
-      dr6 = dr2*dr2*dr2;
-      dr12= dr6*dr6;
+      dx   = r[i][0] - r[atomID][0];
+      dy   = r[i][1] - r[atomID][1];
+      dz   = r[i][2] - r[atomID][2];
+      dr2  = (dx*dx)+(dy*dy)+(dz*dz);
+      dr6  = dr2*dr2*dr2;
+      dr12 = dr6*dr6;
 
-      U_trial = 4.0*(1/dr12_trial - 1/dr6_trial);
-      U       = 4.0*(1/dr12       - 1/dr6);
-      delU += (U_new - U_old); 
+      U_trial = 4.0*((1.0/dr12_trial) - (1.0/dr6_trial));
+      U_old   = 4.0*((1.0/dr12)       - (1.0/dr6));
+      delU += (U_trial - U_old);
+      // if(delU>50){
+      // 	std::cout << "Exiting ....U_trial & U_old : " << U_trial << ", " << U_old << ", " << dr12_trial << ", " << dr6_trial << ", " << dr12 << " , " << dr6 << std::endl;
+      // 	exit(1);
+      // }
     }
   }
+  //std::cout << "Value of delU : " << delU << std::endl;
+  //DU += delU;
 }
-
-//-----------------------------------------------------------------//
-
-// double compute_U()
-// {
-//   // Before calculating energy, make sure to rezero them
-//   double URcut=0.0; U=0.0;
-//   URcut=4.0*(RI12cut - RI6cut);
-
-
-//   for(int i=0; i<Natoms; i++){
-//     if( atomID != i ){
-//       delU = 
-//     }
-//   }
-  
-//   for(int i=0; i<Natoms; i++){
-//     for(int j=i+1; j<Natoms; j++){
-//       R=0.0;
-//       dx=0.0; dy=0.0; dz=0.0;
-//       r2=0.0; r6=0.0; Ir6=0.0;
-
-//       dx = r[i][0] - r[j][0];
-//       dy = r[i][1] - r[j][1];
-//       dz = r[i][2] - r[j][2];
-
-//       // Apply PBC: Nearest Image Convention
-//       if(dx > Hlx) dx=dx-lx;
-//       if(dx <-Hlx) dx=dx+lx;
-//       if(dy > Hly) dy=dy-ly;
-//       if(dy <-Hly) dy=dy+ly;
-//       if(dz > Hlz) dz=dz-lz;
-//       if(dz <-Hlz) dz=dz+lz;
-      
-//       r2 = (dx*dx) + (dy*dy) + (dz*dz);
-      
-//       if(r2<R2cut){
-// 	r6 = r2*r2*r2;
-// 	Ir6 = 1/r6;
-// 	R=std::sqrt(r2);
-// 	U += (4*((Ir6*Ir6)-Ir6) - URcut - (R-Rcut)*RIcut*(-48*RI12cut+24*RI6cut));
-//       } // r2<R2cut
-//     }
-//   }
-//   return U;
-// }
 
 //-----------------------------------------------------------------//
 
@@ -316,7 +339,7 @@ void calc_virial_force()
   
   // Force cutoff correction : Scheme 2
   fcut = RIcut*(-48*RI12cut + 24*RI6cut);  // dU/dr at Rcut
-
+  
   for(int i=0; i<Natoms; i++){
     f[i][0] = 0.0;
     f[i][1] = 0.0;
@@ -360,17 +383,18 @@ void calc_virial_force()
 
 	Vir += (F + (fcut*R));
       } // r2< R2cut
-
     }
   }
+  //std::cout << "F:  " << F << std::endl;
 }
 
 //-----------------------------------------------------------------//
 
 void calc_inst_pressure()
 {
-  P=0.0; 
-  P = (Natoms*T)/Vol + (Vir/(3*Vol));
+  P=0.0;
+  P = ((Natoms*T)/(Vol*120.92) + (Vir/(3*Vol))) * 42.49; //MPa
+  //std::cout << "Value of temp : " << temp << std::endl;
 }
 
 //-----------------------------------------------------------------//
@@ -386,6 +410,9 @@ int main(int argc, char** argv)
   // Initialize the positions !
   init(Natoms, filename);
 
+  // intialize the random seed !
+  srand (time(NULL));
+
   // Compute some parameters
   R2cut   = Rcut*Rcut;
   RIcut   = 1/Rcut;
@@ -394,40 +421,39 @@ int main(int argc, char** argv)
   RI12cut = RI6cut*RI6cut;
   Vol     = lx*ly*lz;
   beta    = 1/(KB*T);
-  
-  // Loop over timesteps
+
   std::ofstream simFile,enerFile;
   simFile.open("LDmj_sim.xyz");
   enerFile.open("LDmj_sim.ener");
-  std::cout << "-----------------------------------" << std::endl;
-  std::cout<< "move" << std::setw(12) << std::setw(12) << "P"
+  std::cout << "----------------------------------------" << std::endl;
+  std::cout<< "     move" << std::setw(15) << std::setw(12) << "P"
 	   << std::setw(12) << "U" << std::endl;
-  std::cout << "-----------------------------------" << std::endl;
+  std::cout << "----------------------------------------" << std::endl;
 
+  
+  // Loop over trial moves
   for(int k=0; k<nmoves; k++){
+    //if(k==0) compute_U();
 
-    // Compute_U_initial
-    compute_U_init();
+    //compute_preU();
     
     // Compute trial moves
     compute_trial_params();
 
+    //compute_postU();
+    compute_delU();
+
     // Apply Metropolis MC
     apply_metropolis();
-    
+
     calc_virial_force();
     calc_inst_pressure();
 
-    // Compute the delU for every 10 moves
-    if(){
-
-    }
-
-       // Output the results for every 100 moves
+    // Output the results for every 100 moves
     if(k%100 == 0){
       std::cout << std::setw(8)  << k  << std::setw(12)
-		<< std::setw(15) << P  << std::setw(15)
-		<< std::setw(12) << U  << std::endl;
+      		<< std::setw(25) << P  << std::setw(15)
+      		<< std::setw(25) << U  << std::setw(20) << delU << std::endl;
       
       write_xyz(simFile, k);
       dump_stats(enerFile, k);

@@ -12,50 +12,29 @@ def moving_avg(x):
     return y
 
 data=np.loadtxt('LDmj_sim.ener')
-t = data[:,1]
-T = data[:,2]
-P = data[:,3]
-PE= data[:,4]
-KE= data[:,5]
-TE= data[:,6]
-px= data[:,7]
-py= data[:,8]
-pz= data[:,9]
+t = data[:,0]
+P = data[:,1]
+PE= data[:,2]
 
 # Energy
 plt.figure(1)
+t_sample=data[10:,0]
+U_sample=data[10:,2]
+U_cavg=moving_avg(P_sample)
 plt.plot(t, PE, '-b', lw=2.0, label='PE')
 plt.hold(True)
-plt.plot(t, KE, '-r', lw=2.0, label='KE')
-plt.hold(True)
-plt.plot(t, TE, '-g', lw=2.0, label='TE')
-plt.hold(True)
+plt.plot(t_sample, U_cavg, '-r', lw=2.0, label='Avg.P')
 plt.legend(loc='best', fontsize=16)
 plt.title('LJ Argon Liquid Simulation (Energy)', fontsize=18)
 plt.xlabel('Time, t [units]', fontsize=16)
-plt.ylabel('Energy', fontsize=16)
+plt.ylabel('U', fontsize=16)
 plt.savefig('LJ-md-Ener.png',dpi=300)
 plt.show()
 
-# Temperature
-plt.figure(2)
-t_sample=data[10:,1]
-T_sample=data[10:,2]
-T_cavg=moving_avg(T_sample)
-plt.plot(t, T, '-b', lw=2.0, label='inst.T')
-plt.hold(True)
-plt.plot(t_sample, T_cavg, '-r', lw=2.0, label='Avg.T')
-plt.legend(loc='best', fontsize=16)
-plt.title('LJ Argon Liquid Simulation (Temperature)', fontsize=18)
-plt.xlabel('Time, t [units]',fontsize=16)
-plt.ylabel('Temperature [K]',fontsize=16)
-plt.savefig('LJ-md-Temp.png',dpi=300)
-plt.show()
-
 # Pressure
-plt.figure(3)
-t_sample=data[10:,1]
-P_sample=data[10:,3]
+plt.figure(2)
+t_sample=data[10:,0]
+P_sample=data[10:,1]
 P_cavg=moving_avg(P_sample)
 print(P_cavg)
 plt.plot(t, P, '-b', lw=2.0, label='inst.P')
@@ -66,19 +45,4 @@ plt.title('LJ Argon Liquid Simulation (Pressure)', fontsize=18)
 plt.xlabel('Time, t [units]',fontsize=16)
 plt.ylabel('dim.less Pressure',fontsize=16)
 plt.savefig('LJ-md-Pressure.png',dpi=300)
-plt.show()
-
-# Momentum
-plt.figure(4)
-plt.plot(t, px, '-b', lw=2.0, label='Px')
-plt.hold(True)
-plt.plot(t, py, 'or', lw=2.0, label='Py')
-plt.hold(True)
-plt.plot(t, pz, '-g', lw=2.0, label='Pz')
-plt.hold(True)
-plt.legend(loc='best', fontsize=16)
-plt.title('LJ Argon Liquid Simulation (Momentum)', fontsize=18)
-plt.xlabel('Time, t [units]', fontsize=16)
-plt.ylabel('Momentum',fontsize=16)
-plt.savefig('LJ-md-Mom.png',dpi=300)
 plt.show()
