@@ -1,5 +1,5 @@
 /*
- * Molecular Dynamics simulation of lennard-jones nano-
+ * Metropolis Monte-Carlo simulation of lennard-jones nano-
  * particles.
  *
  * Abhishek Bagusetty
@@ -10,8 +10,6 @@
  * Building instructions :
  *    - make
  *    - make clean
- * Loop unrolling is implemented for the coordinates so
- * hardware thread gets appropriate work.
  *
  * (c) 2015-16
  */
@@ -24,32 +22,39 @@
 #include <iomanip>
 
 // Function definitions
-void calc_pairenergy();
+void compute_trial_params();
+double compute_U();
 void calc_virial_force();
-void calc_kenergy();
-void calc_momentum();
 void calc_inst_temp_pr();
 void vv_scheme();
 
 double elapsed_time=0.0;
 double dt=0.002;
 double t;
+int atomID=0;
 int Natoms;
+int nmoves=100000;
+double beta=0.0;
+double T=100; //K
 double *m=NULL;
 double R=0.0, Rcut=2.5;
+double dx_rand, dy_rand, dz_rand, d_max=0.5;
 double R2cut=0.0, RIcut=0.0, RI2cut=0.0, RI6cut=0.0, RI12cut=0.0;
-double **r=NULL, **v=NULL, **f=NULL;
-double **r_old=NULL, **v_old=NULL, **f_old=NULL;
+double **r=NULL, **r_trial=NULL,  **f=NULL;
+double **r_old=NULL;
 double lx=6.8, ly=6.8, lz=6.8;
 double Hlx=0.5*lx, Hly=0.5*ly, Hlz=0.5*lz;
 double Vir=0.0, Vol=0.0;
-double KB=1.0, T=0.0, P=0.0;
+double KB=1.0, P=0.0;
+int count_acc=0;
+double eps = 0.0;
+double acc = 0.0;
 
 // Energy and force calculation variables
-double U=0.0, KE=0.0, TE=0.0;
+double U=0.0, U_trial=0.0;
 double dx=0.0, dy=0.0, dz=0.0;
 double r2=0.0, r6=0.0, Ir6=0.0;
-double px=0.0, py=0.0, pz=0.0;
+
 double fcut=0.0, fijx=0.0, fijy=0.0, fijz=0.0, F=0.0;
 
 //-----------------------------------------------------------------//
@@ -62,27 +67,26 @@ void write_xyz(std::ofstream& simFile, int config)
   simFile << "    " << Natoms+1 << std::endl;
   simFile << " i =  " << config << std::endl;
   for(int i=0; i<Natoms; i++) {
-    simFile << "H" << std::setw(15) << r[i][0] << std::setw(20) << r[i][1] << std::setw(20) << r[i][2] << std::endl;
+    simFile << "Ar" << std::setw(15) << r[i][0] << std::setw(20) << r[i][1] << std::setw(20) << r[i][2] << std::endl;
     Xcom += r[i][0];
     Ycom += r[i][1];
     Zcom += r[i][2];
   }
-  simFile << "O" << std::setw(15) << Xcom/Natoms << std::setw(20) << Ycom/Natoms << std::setw(20) << Zcom/Natoms << std::endl;
+  //  simFile << "O" << std::setw(15) << Xcom/Natoms << std::setw(20) << Ycom/Natoms << std::setw(20) << Zcom/Natoms << std::endl;
 }
 
-
+//-----------------------------------------------------------------//
 /* 
  * brief - Write the stats information
  */
 void dump_stats(std::ofstream& enerFile, int config)
 {
-  enerFile << std::setw(8) << config << std::setw(12) << elapsed_time
-	   << std::setw(12) << T  << std::setw(12) << P
-	   << std::setw(12) << U  << std::setw(12) << KE
-	   << std::setw(12) << TE << std::setw(15) << px
-	   << std::setw(15) << py << std::setw(15) << py << std::endl;
+  enerFile << std::setw(8) << config
+	   << std::setw(12) << std::setw(12) << P
+	   << std::setw(12) << U  << std::endl;
 }
 
+//-----------------------------------------------------------------//
 /*
  * brief - get number of atoms
  */
@@ -101,6 +105,7 @@ int get_natoms(const char* filename)
   return (count-1);
 }
 
+//-----------------------------------------------------------------//
 /*
  * brief - read the coordinates of atoms from a text file
  */
@@ -119,163 +124,167 @@ void read_xyz(const int Natoms, const char* filename)
 }
 
 //-----------------------------------------------------------------//
+/*
+ * brief - initialize the positions by reading the inputs.
+ *
+ */
+void compute_trial_params(){
+  // intialize the random seed !
+  srand (time(NULL));
+
+  // Set the perturbations (-1,1)
+  dx_rand = d_max * (2.0*(double(rand())/double(RAND_MAX)) - 1.0);
+  dy_rand = d_max * (2.0*(double(rand())/double(RAND_MAX)) - 1.0);
+  dz_rand = d_max * (2.0*(double(rand())/double(RAND_MAX)) - 1.0);
+
+  // Randomly select an atom
+  atomID = rand()%256;
+  for(int i=0; i<Natoms; i++){
+    if( atomID==i ){
+      r_trial[atomID][0] = r[atomID][0] + dx_rand;
+      r_trial[atomID][1] = r[atomID][1] + dy_rand;
+      r_trial[atomID][2] = r[atomID][2] + dz_rand;
+    }
+    else{
+      r_trial[i][0] = r[i][0];
+      r_trial[i][1] = r[i][1];
+      r_trial[i][2] = r[i][2];
+    }
+  }
+}
+
+//-----------------------------------------------------------------//
 
 /*
  * brief - initialize the positions by reading the inputs.
  *
  */
 void init(int Natoms, const char* filename){
-  // Memory Management
-  m     = new double[Natoms];
   r     = new double*[Natoms];
-  v     = new double*[Natoms];
+  r_trial = new double*[Natoms];
   f     = new double*[Natoms];
-  r_old = new double*[Natoms];
-  v_old = new double*[Natoms];
-  f_old = new double*[Natoms];
 
   for(int i=0; i<Natoms; i++){
     r[i]     = new double[3];
-    v[i]     = new double[3];
+    r_trial[i] = new double[3];
     f[i]     = new double[3];
-    r_old[i] = new double[3];
-    v_old[i] = new double[3];
-    f_old[i] = new double[3];
   }
 
   // initialize the positions
   read_xyz(Natoms, filename);
+}
 
-  // intialize the mass, velocities, forces
-  srand (time(NULL));
-  for(int i=0; i<Natoms; i++){
-    m[i] = 1.0;
+//-----------------------------------------------------------------//
 
-    v[i][0] = 2*(double(rand())/double(RAND_MAX)) - 1.0;
-    v[i][1] = 2*(double(rand())/double(RAND_MAX)) - 1.0;
-    v[i][2] = 2*(double(rand())/double(RAND_MAX)) - 1.0;
-    
-    f[i][0] = 0.0; f[i][1] = 0.0; f[i][2] = 0.0;
-  }
+/* 
+ * brief - Employ Metropolis Monte-Carlo
+ */
+void apply_metropolis()
+{
+  if(U_trial < U){ // Accept the move
 
-  // 1. Normalize the velocities so that the total momentum is zero
-  // 2. Scale velocities such that desired temperature is obtained.
-  // Using Velocity Re-scaling algorithm
-  double Vx=0.0, Vy=0.0, Vz=0.0;
-  for(int i=0; i < Natoms; i++){
-    Vx += v[i][0];
-    Vy += v[i][1];
-    Vz += v[i][2];
+    for(int i=0; i<Natoms; i++){
+      r[i][0] = r_trial[i][0];
+      r[i][1] = r_trial[i][1];
+      r[i][2] = r_trial[i][2];
+    }
+    U = U_trial;
   }
-  for(int i=0; i<Natoms; i++){
-    v[i][0] = v[i][0] - (1.0/double(Natoms))*Vx;
-    v[i][1] = v[i][1] - (1.0/double(Natoms))*Vy;
-    v[i][2] = v[i][2] - (1.0/double(Natoms))*Vz;
-  }
-  
-  double Tset = 129; // 1.5X than 100k
-  calc_kenergy();
-  calc_inst_temp_pr();
-  double alpha = std::sqrt(Tset/T);
-  for(int i=0; i<Natoms; i++){
-    v[i][0] = alpha*v[i][0];
-    v[i][1] = alpha*v[i][1];
-    v[i][2] = alpha*v[i][2];
+  else{
+    eps = double(rand())/double(RAND_MAX);
+    acc = exp(-beta*(U_trial - U));
+    if(eps <= acc){ // Accept
+      count_acc = count_acc + 1;
+
+      for(int i=0; i<Natoms; i++){
+	r[i][0] = r_trial[i][0];
+	r[i][1] = r_trial[i][1];
+	r[i][2] = r_trial[i][2];
+      }
+      U = U_trial;
+    }
+    // else{ // Reject
+    //   x = x;
+    //   U = U;
+    // }
   }
 }
 
 //-----------------------------------------------------------------//
 
-void vv_scheme()
+double compute_delU()
 {
-  double tfact;
-  // reinitialize all the temp variables to zero.
-  for(int i=0; i<Natoms; i++){
-    r_old[i][0] = r[i][0];
-    r_old[i][1] = r[i][1];
-    r_old[i][2] = r[i][2];
-
-    v_old[i][0] = v[i][0];
-    v_old[i][1] = v[i][1];
-    v_old[i][2] = v[i][2];
-
-    f_old[i][0] = f[i][0];
-    f_old[i][1] = f[i][1];
-    f_old[i][2] = f[i][2];
-  }
-
-  for(int i=0; i<Natoms; i++){
-    tfact = dt/(2.0*m[i]);
-    // Step 1. v(t+0.5dt)
-    v[i][0] = v_old[i][0] + f_old[i][0]*tfact;
-    v[i][1] = v_old[i][1] + f_old[i][1]*tfact;
-    v[i][2] = v_old[i][2] + f_old[i][2]*tfact;
-
-    v_old[i][0] = v[i][0];
-    v_old[i][1] = v[i][1];
-    v_old[i][2] = v[i][2];
-
-    // Step 2. r(t+dt)
-    r[i][0] = r_old[i][0] + v_old[i][0]*dt;
-    r[i][1] = r_old[i][1] + v_old[i][1]*dt;
-    r[i][2] = r_old[i][2] + v_old[i][2]*dt;
-
-    // Apply PBC
-    if(r[i][0] <  0) r[i][0] = r[i][0] + lx;
-    if(r[i][0] > lx) r[i][0] = r[i][0] - lx;
-    if(r[i][1] <  0) r[i][1] = r[i][1] + ly;
-    if(r[i][1] > ly) r[i][1] = r[i][1] - ly;
-    if(r[i][2] <  0) r[i][2] = r[i][2] + lz;
-    if(r[i][2] > lz) r[i][2] = r[i][2] - lz;
-  }
-
-  calc_pairenergy();
-  calc_virial_force();
+  delU = 0.0;
   
   for(int i=0; i<Natoms; i++){
-    // Step 3. v(t+dt)
-    v[i][0] = v_old[i][0] + f[i][0]*tfact;
-    v[i][1] = v_old[i][1] + f[i][1]*tfact;
-    v[i][2] = v_old[i][2] + f[i][2]*tfact;
-  }
-}
-
-//-----------------------------------------------------------------//
-
-void calc_pairenergy()
-{
-  // Before calculating energy, make sure to rezero them
-  double URcut=0.0; U=0.0;
-  URcut=4.0*(RI12cut - RI6cut);
-    
-  for(int i=0; i<Natoms; i++){
-    for(int j=i+1; j<Natoms; j++){
-      R=0.0;
-      dx=0.0; dy=0.0; dz=0.0;
-      r2=0.0; r6=0.0; Ir6=0.0;
-
-      dx = r[i][0] - r[j][0];
-      dy = r[i][1] - r[j][1];
-      dz = r[i][2] - r[j][2];
-      // Apply PBC: Nearest Image Convention
-      if(dx > Hlx) dx=dx-lx;
-      if(dx <-Hlx) dx=dx+lx;
-      if(dy > Hly) dy=dy-ly;
-      if(dy <-Hly) dy=dy+ly;
-      if(dz > Hlz) dz=dz-lz;
-      if(dz <-Hlz) dz=dz+lz;
+    if(atomID!=i){
+      dx_trial = r_trial[i][0] - r_trial[atomID][0];
+      dy_trial = r_trial[i][1] - r_trial[atomID][1];
+      dz_trial = r_trial[i][2] - r_trial[atomID][2];
+      dr_trial = std::sqrt( (dx_trial*dx_trial)+(dy_trial*dy_trial)+(dz_trial*dz_trial) );
+      dr2_trial = dr_trial*dr_trial;
+      dr6_trial = dr2_trial*dr2_trial*dr2_trial;
+      dr12_trial= dr6_trial*dr6_trial;
       
-      r2 = (dx*dx) + (dy*dy) + (dz*dz);
-      
-      if(r2<R2cut){
-	r6 = r2*r2*r2;
-	Ir6 = 1/r6;
-	R=std::sqrt(r2);
-	U += (4*((Ir6*Ir6)-Ir6) - URcut - (R-Rcut)*RIcut*(-48*RI12cut+24*RI6cut));
-      } // r2<R2cut
+      dx = r[i][0] - r[atomID][0];
+      dy = r[i][1] - r[atomID][1];
+      dz = r[i][2] - r[atomID][2];
+      dr = std::sqrt( (dx*dx)+(dy*dy)+(dz*dz) );
+      dr2 = dr*dr;
+      dr6 = dr2*dr2*dr2;
+      dr12= dr6*dr6;
+
+      U_new = 4.0*(1/dr12_trial - 1/dr6_trial);
+      U_old = 4.0*(1/dr12       - 1/dr6);
+      delU += (U_new - U_old); 
     }
   }
+
 }
+  
+// double compute_U()
+// {
+//   // Before calculating energy, make sure to rezero them
+//   double URcut=0.0; U=0.0;
+//   URcut=4.0*(RI12cut - RI6cut);
+
+
+//   for(int i=0; i<Natoms; i++){
+//     if( atomID != i ){
+//       delU = 
+//     }
+//   }
+  
+//   for(int i=0; i<Natoms; i++){
+//     for(int j=i+1; j<Natoms; j++){
+//       R=0.0;
+//       dx=0.0; dy=0.0; dz=0.0;
+//       r2=0.0; r6=0.0; Ir6=0.0;
+
+//       dx = r[i][0] - r[j][0];
+//       dy = r[i][1] - r[j][1];
+//       dz = r[i][2] - r[j][2];
+
+//       // Apply PBC: Nearest Image Convention
+//       if(dx > Hlx) dx=dx-lx;
+//       if(dx <-Hlx) dx=dx+lx;
+//       if(dy > Hly) dy=dy-ly;
+//       if(dy <-Hly) dy=dy+ly;
+//       if(dz > Hlz) dz=dz-lz;
+//       if(dz <-Hlz) dz=dz+lz;
+      
+//       r2 = (dx*dx) + (dy*dy) + (dz*dz);
+      
+//       if(r2<R2cut){
+// 	r6 = r2*r2*r2;
+// 	Ir6 = 1/r6;
+// 	R=std::sqrt(r2);
+// 	U += (4*((Ir6*Ir6)-Ir6) - URcut - (R-Rcut)*RIcut*(-48*RI12cut+24*RI6cut));
+//       } // r2<R2cut
+//     }
+//   }
+//   return U;
+// }
 
 //-----------------------------------------------------------------//
 
@@ -330,7 +339,7 @@ void calc_virial_force()
 	f[j][1] -= fijy;
 	f[j][2] -= fijz;
 
-	Vir += (F+(fcut*R));
+	Vir += (F + (fcut*R));
       } // r2< R2cut
 
     }
@@ -339,34 +348,10 @@ void calc_virial_force()
 
 //-----------------------------------------------------------------//
 
-void calc_kenergy()
+void calc_inst_pressure()
 {
-  KE = 0.0;
-  for(int i=0; i<Natoms; i++) KE += (v[i][0]*v[i][0]) + (v[i][1]*v[i][1]) + (v[i][2]*v[i][2]);
-  KE *= 0.5;
-}
-
-//-----------------------------------------------------------------//
-
-void calc_momentum()
-{
-  px=0.0; py=0.0; pz=0.0;
-  // Assumption : Mass of atoms = 1.0
-  for(int i=0; i<Natoms; i++){
-    px += m[i]*v[i][0];
-    py += m[i]*v[i][1];
-    pz += m[i]*v[i][2];
-  }
-}
-
-//-----------------------------------------------------------------//
-
-void calc_inst_temp_pr()
-{
-  T=0.0; P=0.0; 
-  T = (2*KE)/(3.0*(Natoms-1)*KB);
+  P=0.0; 
   P = (Natoms*T)/Vol + (Vir/(3*Vol));
-  T = T*120.962;
 }
 
 //-----------------------------------------------------------------//
@@ -388,46 +373,43 @@ int main(int argc, char** argv)
   RI2cut  = 1/R2cut;
   RI6cut  = RI2cut*RI2cut*RI2cut;
   RI12cut = RI6cut*RI6cut;
-  Vol = lx*ly*lz;
-
+  Vol     = lx*ly*lz;
+  beta    = 1/(KB*T);
+  
   // Loop over timesteps
   std::ofstream simFile,enerFile;
   simFile.open("LDmj_sim.xyz");
   enerFile.open("LDmj_sim.ener");
-  std::cout << "-------------------------------------------------------------------------------------------------------------------------------" << std::endl;
-  std::cout<< "timestep" << std::setw(12) << "time"
-    	   << std::setw(12) << "T" << std::setw(12) << "P"
-	   << std::setw(12) << "PE" << std::setw(12) << "KE"
-	   << std::setw(12) << "TE" << std::setw(15) << "Px"
-	   << std::setw(15) << "Py" << std::setw(15)
-	   << "Pz" << std::setw(15) << std::endl;
-  std::cout << "-------------------------------------------------------------------------------------------------------------------------------" << std::endl;
+  std::cout << "-----------------------------------" << std::endl;
+  std::cout<< "move" << std::setw(12) << std::setw(12) << "P"
+	   << std::setw(12) << "U" << std::endl;
+  std::cout << "-----------------------------------" << std::endl;
 
-  for(int k=0; k<=100000; k++) {
-    elapsed_time = dt*double(k);
+  for(int k=0; k<nmoves; k++){
 
-    // Calculate pair-energy and forces
-    if(k==0) calc_virial_force();
+    // Compute trial moves
+    compute_trial_params();
 
-    calc_kenergy();
-    TE=U+KE;
-    calc_inst_temp_pr();
+    // Apply Metropolis MC
+    apply_metropolis();
+    
+    calc_virial_force();
+    calc_inst_pressure();
 
-    if(k%100 == 0) {
-      std::cout << std::setw(8)  << k  << std::setw(12) << elapsed_time
-		<< std::setw(15) << T  << std::setw(15) << P
-		<< std::setw(12) << U  << std::setw(12) << KE
-		<< std::setw(12) << TE << std::setw(15) << px
-		<< std::setw(15) << py << std::setw(15) << pz
-		<< std::setw(15) << std::endl;
+    // Compute the delU for every 10 moves
+    if(){
+
+    }
+
+       // Output the results for every 100 moves
+    if(k%100 == 0){
+      std::cout << std::setw(8)  << k  << std::setw(12)
+		<< std::setw(15) << P  << std::setw(15)
+		<< std::setw(12) << U  << std::endl;
       
-      calc_momentum();
       write_xyz(simFile, k);
       dump_stats(enerFile, k);
     }
-    
-    // parameters are computed for (i+1)
-    vv_scheme();
   }
   
   simFile.close();
