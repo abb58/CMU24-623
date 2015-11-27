@@ -33,14 +33,14 @@ void calc_inst_pressure();
 
 int atomID=0;
 int Natoms;
-int nmoves=200000;
+int nmoves=500000;
 double beta=0.0;
 double T=100; //K
 double R=0.0, Rcut=2.5;
-double d_max=0.5;
+double d_max=0.05;
 double R2cut=0.0, RIcut=0.0, RI2cut=0.0, RI6cut=0.0, RI12cut=0.0;
 double **r=NULL, r_old[3]={},  **f=NULL;
-double lx=6.8, ly=6.8, lz=6.8;
+double lx=7.5070, ly=7.5070, lz=7.5070;
 double Hlx=0.5*lx, Hly=0.5*ly, Hlz=0.5*lz;
 double Vir=0.0, Vol=0.0;
 double P=0.0;
@@ -77,8 +77,8 @@ void write_xyz(std::ofstream& simFile, int config)
 void dump_stats(std::ofstream& enerFile, int config)
 {
   enerFile << std::setw(8) << config
-	   << std::setw(12) << std::setw(12) << P
-	   << std::setw(12) << U  << std::endl;
+	   << std::setw(20) << std::setw(20) << P
+	   << std::setw(20) << U  << std::endl;
 }
 
 //-----------------------------------------------------------------//
@@ -316,7 +316,6 @@ void calc_virial_force()
       } // r2< R2cut
     }
   }
-  //std::cout << "F:  " << F << std::endl;
 }
 
 //-----------------------------------------------------------------//
@@ -324,8 +323,7 @@ void calc_virial_force()
 void calc_inst_pressure()
 {
   P=0.0;
-  P = ((Natoms*T)/(Vol*120.962) + (Vir/(3*Vol))) * 42.49; //MPa
-  //std::cout << "Value of temp : " << temp << std::endl;
+  P = (((Natoms*T)/(Vol*120.962)) + (Vir/(3.0*Vol))) * 42.49; //MPa
 }
 
 //-----------------------------------------------------------------//
@@ -355,7 +353,8 @@ int main(int argc, char** argv)
 
   std::ofstream simFile,enerFile;
   //simFile.open("LDmj_sim.xyz");
-  enerFile.open("LDmj_sim_05.ener");
+
+  enerFile.open("LDmj_sim.ener");
   std::cout << "----------------------------------------" << std::endl;
   std::cout<< "     move" << std::setw(15) << std::setw(12) << "P"
 	   << std::setw(12) << "U" << std::endl;
@@ -377,15 +376,14 @@ int main(int argc, char** argv)
     // Apply Metropolis MC
     apply_metropolis();
 
-    calc_virial_force();
-    calc_inst_pressure();
-
     // Output the results for every 100 moves
     if(k%100 == 0){
+      calc_virial_force();
+      calc_inst_pressure();
+
       std::cout << std::setw(8)  << k  << std::setw(12)
       		<< std::setw(25) << P  << std::setw(15)
       		<< std::setw(25) << U  << std::endl;
-      
       //write_xyz(simFile, k);
       dump_stats(enerFile, k);
     }
@@ -393,6 +391,6 @@ int main(int argc, char** argv)
   
   simFile.close();
   enerFile.close();
-  std::cout << "Percentage Acceptance of trail moves : " << (double(count_acc)/double(nmoves))*100.0 << std::endl;
+  std::cout << "% Acceptance of trail moves : " << (double(count_acc)/double(nmoves))*100.0 << std::endl;
   return 0;
 }

@@ -399,7 +399,6 @@ void calc_virial_force()
       } // r2< R2cut
     }
   }
-  std::cout << "Value of F : " << F << std::endl;
 }
 
 //-----------------------------------------------------------------//
@@ -430,10 +429,7 @@ void calc_inst_temp_pr()
 {
   T=0.0; P=0.0; 
   T = (2*KE)/(3.0*(Natoms-1)*KB);
-  std::cout << "Vir : " << Vir << std::endl;
   P = ((Natoms*T)/Vol + (Vir/(3*Vol)))*42.49; // MPa
-  double temp = (Natoms*T)/Vol;
-  //std::cout << "Value of temp : " << temp << std::endl;
   T = T*120.962;
 }
 
@@ -471,7 +467,7 @@ int main(int argc, char** argv)
 	   << "Pz" << std::setw(15) << std::endl;
   std::cout << "-------------------------------------------------------------------------------------------------------------------------------" << std::endl;
 
-  for(int k=0; k<=100000; k++) {
+  for(int k=0; k<=200000; k++) {
     elapsed_time = dt*double(k);
 
     // Calculate pair-energy and forces
@@ -489,15 +485,15 @@ int main(int argc, char** argv)
 		<< std::setw(15) << py << std::setw(15) << pz
 		<< std::setw(15) << std::endl;
       
-      calc_momentum();
-      write_xyz(simFile, k);
+      //calc_momentum();
+      //write_xyz(simFile, k);
       dump_stats(enerFile, k);
     }
     
     // parameters are computed for (i+1)
     vv_scheme_nose_hoover();
   }
-  
+
   simFile.close();
   enerFile.close();
   
