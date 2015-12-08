@@ -83,9 +83,10 @@ void apply_metropolis()
 void compute_trial_parameters()
 {
   // Generate trial move
-  double start=-2.0, end=q+(0.5*epsilon)
-  double x_start = (double(rand())/double(RAND_MAX));
+  double start=-2.0, end=q+(0.5*epsilon);
+  double x_start = start + ((double(rand())/double(RAND_MAX)) * (end-start));
   dx = dx_max * (2.0*(double(rand())/double(RAND_MAX)) - 1.0);
+
   x_trial = x_start + dx;
 
   // Generate trial potential
