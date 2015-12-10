@@ -1,0 +1,10 @@
+% Acceptance of trail moves : 61.5542 , M : 8968
+Value of k(Mc, 1) : 0.0715543
+% Acceptance of trail moves : 61.5931 , M : 7670
+Value of k(Mc, 1) : 0.0611977
+% Acceptance of trail moves : 61.5882 , M : 7135
+Value of k(Mc, 1) : 0.0569291
+% Acceptance of trail moves : 61.4141 , M : 7297
+Value of k(Mc, 1) : 0.0582216
+% Acceptance of trail moves : 24.7521 , M : 2825
+Value of k(Mc, 1) : 0.0225402

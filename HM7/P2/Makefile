@@ -1,4 +1,4 @@
 main:
 
 clean:
-	rm -rf *~ *.o *.ener *.xyz *.jpg *.png main
+	rm -rf *~ *.o *.txt *.ener *.xyz *.jpg *.png main

@@ -1,0 +1,75 @@
+#+TITLE: 24-623 2015 HM7
+#+AUTHOR: Abhishek Bagusetty
+#+LATEX_CLASS: cmu-article
+#+OPTIONS: ^:{} # make super/subscripts only when wrapped in {}
+#+OPTIONS: toc:nil # suppress toc, so we can put it where we want
+#+OPTIONS: tex:t
+#+EXPORT_EXCLUDE_TAGS: noexport
+#+LATEX_HEADER: \usepackage[makeroom]{cancel}
+#+LATEX_HEADER: \usepackage{verbatim}
+
+\maketitle
+
+* Problem 1
+** a)
+#+caption: The figure shows the plot of U(x) and its harmonic approximation in well A.
+#+label: fig:P1-a
+[[./P1/P1-a.png]]
+
+** b)
+#+caption: The figure shows the plot of TST rate expression from harmonic approximation as a function of \beta.
+#+label: fig:P1-b
+[[./P1/P1-b.png]]
+The loglog plot of k_{A \rightarrow B}^{TST} from the harmonic rate expression for a range of \beta in Fig.ref:fig:P1-b.
+** c)
+Limit of the approximation is plotted in the Fig.ref:fig:P1-b. Value of k in the expression of harmonic TST rate is obtained by $\frac{d^2U(x)}{dx^2}$ at x_{o}. 
+
+As the parameters \beta, k, q increases, the immediate consequence is the effect of having a value of the limit greater than 1.8. Higher the value of q would implies that minima and maxima are seperated to a greater extent. The value of k is related to $\frac{d^2U(x)}{dx^2}$ at x_{o}, which means that higher the value means the potential surface is concave upward. Concave upward in this context means that the local minima is driving towards a maximum indicated by the slope. All these variables drive towards predicting a better rate from harmonic transition state.
+
+* Problem 2
+** a)
+#+caption: The figure shows the plot of TST rate compute using the harmonic approximation and Metropolis NVT MC simulation
+#+label: fig:P2
+[[./P2/P1-b.png]]
+
+The values of the TST rate at different values of \beta are tabulated from the harmonic approximation and Mertopolis NVT MC simualtion.
+#+caption: TST rates from harmonic and MC techniques.
+| \beta |     K_HTST |        K_MC |
+|-------+------------+-------------|
+|  0.01 |   0.445679 |    0.394075 |
+|   0.1 |  0.4073199 |    0.376149 |
+|     1 |  0.1656039 |  0.07155430 |
+|    10 |  2.0437E-5 | 1.26157E-05 |
+|   100 | 1.6746E-44 |           0 |
+
+*** Computational Setup
+Number of trial moves (N) is choosen sufficiently such that it is independent of other parameters in the simulation. The number of trial moves is chosen to be 10,000,000. With the N being kept constant, the \epsilon value is chosen to be small enough that it would yeild an appropriate value of rate and the value is validated with the harmonic approximation. It is found that \epsilon value of 0.005 yields a value converging well to harmonic approximation as shown in ref:fig:P2. With the above parameters kept constant, maximum step size is determined. Various values of maximum step size ranging from 0.01, 0.05, 0.1, 0.5, 5 for each value of \beta=[0.01, 0.1, 1, 10, 100].
+
+#+caption: TST rates from harmonic and MC techniques at various maximum step sizes and at various values of \beta.
+|                \beta |     K_HTST | K_MC \rightarrow |             |             |            |            |
+|----------------------+------------+------------------+-------------+-------------+------------+------------|
+| dx_{max} \rightarrow |            | 0.01             |        0.05 |         0.1 |        0.5 |          5 |
+|                 0.01 |   0.445679 | 1.23975          |     1.03988 |     1.01451 |   0.986504 | *0.394075* |
+|                  0.1 |  0.4073199 | *0.376149*       |     0.31905 |     0.31191 |   0.305047 |   0.123129 |
+|                    1 |  0.1656039 | *0.0715543*      |   0.0611977 |   0.0569291 |  0.0582216 |  0.0225402 |
+|                   10 |  2.0437E-5 | *1.26157E-05*    | 1.76619e-05 | 1.26157E-05 | 7.5694E-06 |          0 |
+|                  100 | 1.6746E-44 | -                |           - |           - |          - |          - |
+
+Vlaues highlighted in bold are the values converging to harmonic approximation benchmark. It is determined from the above table that dx_{max} value of 0.01 yields good results with a resonable convergence to haromic approximation for the \beta values of 0.1, 1, 10, 100. Maximum step size of 5 is used for the \beta=0.01.
+Optimum value of \epsilon is chosen based on its convergence to the value from harmonic approximation.
+
+#+caption: TST rates from harmonic and MC techniques at various \epsilon and at a fixed maximum step size and number of trial moves.
+|                \beta |     K_HTST | K_MC \rightarrow |             |            |             |
+|----------------------+------------+------------------+-------------+------------+-------------|
+| \epsilon \rightarrow |            |             0.01 |        0.05 |        0.1 |       0.005  |
+|                 0.01 |   0.445679 |         0.197157 |   0.0397267 |  0.0197716 |    0.394075 |
+|                  0.1 |  0.4073199 |         0.189412 |     0.03818 |  0.0186081 |    0.376149 |
+|                    1 |  0.1656039 |          0.03622 |  0.00716899 | 0.00360923 |   0.0715543 |
+|                   10 |  2.0437E-5 |        2.523E-06 | 1.00925E-06 |  7.567E-07 | 1.26157E-05 |
+|                  100 | 1.6746E-44 |                - |           - |          - |           - |
+
+** b)
+The rate obtained from monte carlo technique is greatly dependent on the following parameters - M, N and \epsilon. The rates obtained from both the techniques is comparable atleast with an order of magnitude. The rates computed from the MC-NVT-TST seems to be diverging from the harmonic approximations as the \beta is getting higher and computations are not feasible as the temperature gets lower. 
+
+The overall significance of relating rates to \beta is interesting. At higher temperatures, one would have higher rates because the process is activated from thermal energy due the higher temperature (lower \beta).
+The vibrational frequency at higher temperatures would increase for the bonds and hence the rates to drive the process would be higher. This process is vice-versa to that at the lower temperatures (higher \beta) as the frequency of vibration of bonds are not significant. This process is shown in Fig.ref:fig:P2
