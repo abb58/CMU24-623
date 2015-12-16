@@ -1,0 +1,25 @@
+#+TITLE: Molecular Simulation of Proton Transport
+#+AUTHOR: Abhishek Bagusetty
+#+LATEX_CLASS: cmu-article
+#+OPTIONS: ^:{} # make super/subscripts only when wrapped in {}
+#+OPTIONS: toc:nil # suppress toc, so we can put it where we want
+#+OPTIONS: tex:t
+#+EXPORT_EXCLUDE_TAGS: noexport
+
+\maketitle
+
+* Review - 1
+Classical molecular dynamics simulation are performed to characterize the changes in the nanostructure of Nafion membrane that is a predominantly used material for proton exchange membrane fuel cells. 
+Atomistic simulation of Nafion Membrane 
+
+* Review - 2
+
+* Review - 3
+
+
+* Bibliography
+# <<bibliographystyle>>
+bibliographystyle:unsrt
+
+# <<bibliography>>
+bibliography:./references.bib
