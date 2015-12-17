@@ -8,11 +8,11 @@
 
 \maketitle
 
-* Review - Atomistic Simulation of Nafion membrane: I. Effect of Hydration on Membrane Nanostructure 
+* Review - Atomistic Simulation of Nafion membrane: I. Effect of Hydration on Membrane Nanostructure cite:devnathan2007 
 ** Abstract
-The article under review is about classical molecular dynamics simulation  performed to characterize the changes in the nanostructure of Nafion membrane that is a predominantly used material for proton exchange membrane fuel cells. It is necessary that the Nafion nanostructure is sufficiently hydrated so that facilitation of proton transport is feasible. It would be of great importance, to understand the nanostructure of Nafion systematically under various hydration levels using atomistic simulations. Nafion contains a hydrophobic CF_{2} backbone and a hydrophilic sulfonic acid terminated pendent to form nanoscale domains facilitating ionic transport. It is very well known that that water loading is an important factor for proton transport membrane and hence a water loading represented by \lambda is introduced which is the total number of water molecules and hydronium ions per sulfonate group.
+Classical molecular dynamics simulations are performed to characterize the changes in the nanostructure of Nafion membrane that is a predominantly used material for proton exchange membrane fuel cells. It is necessary that the Nafion nanostructure is sufficiently hydrated so that facilitation of proton transport is feasible. It would be of great importance, to understand the nanostructure of Nafion systematically under various hydration levels using atomistic simulations. Nafion contains a hydrophobic CF_{2} backbone and a hydrophilic sulfonic acid terminated pendent to form nanoscale domains facilitating ionic transport. It is very well known that that water loading is an important factor for proton transport membrane and hence a water loading represented by \lambda is introduced which is the total number of water molecules and hydronium ions per sulfonate group.
 
-It is found from the earlier work that the increase of water loading lead to the formation of water clusters that gets formed dynamically and broke to establish water channels. This behavior lead to investigate the structure of excess charge solvation affecting the nanostructure of Nafion. This current work systematically studied hydration levels (\lambda = 1,3,5,7,9,11,13.5 and 20) to closely monitor the nanostructure of Nafion and also the bulk water phase and relate it to the the experiments performed in the literature.
+It is found from the earlier work that the increase of water loading lead to the formation of water clusters that gets formed dynamically and broke to establish water channels. This behavior lead to investigate the structure of excess charge solvation affecting the nanostructure of Nafion. This current work systematically studied hydration levels (\lambda = 1,3,5,7,9,11,13.5 and 20) to monitor the nanostructure of Nafion and also the bulk water phase and relate it to the the experiments performed in the literature.
   
 ** Methodology
 Classical molecular dynamics simualtions are performed with DREIDING force field for Nafion. The simulation cell contained 40 SO_{3}^{-} groups seperated by 7 nonpolar -CF_{2}-CF_{2}- monomer. The equilibrium phase is done over 4 steps: (1) NPT MD simulation is performed at 300K for 10 ps. This is performed to attain appropriate density. (2) NVT MD simulation is performed for 50 ps with the temperture raised from 300K to 600K. (3) Followed by NVT simulation of 50ps at 600K. (4) NVT MD simulation for 50ps with temperature again lowered from 600K to 300K. It is important to note that the temperature is raised from 300K to 600K and then it is dropped again back to 300K. The final production runs are performed using NVE ensemble at 300K for each water loading for 2 ns  and the configurations are saved at every 0.2 ps. The step size used for the integration was 1fs. Simulations are performed using DL_POLY package with DREIDING force field for Nafion and F3C forcefield for water.
@@ -34,7 +34,7 @@ Simulations are performed to investigate the effect of various hydration levels 
 ** Critical Comments
 The equilibrium phase of relaxation is very trickly presented. NVT MD simulations are performed to raise the temperature from 300K to 600K and then again the temperature is dropped from 600K to 300K. It would have been more clear, if elaborate explanation about the 4 step relaxation is provided.
 
-* Review - The Computer Simulation of Proton Transport in Water
+* Review - The Computer Simulation of Proton Transport in Water cite:schmitt1999
 ** Abstract
 This paper explicitly deals with designing the potential for performing proton transport simulations in water. As the proton hopping mechanism involves covalent bond making and breaking, it is necessary that the potentials describes these description with a finer level of accuracy. Multistate empirical valence bond (MS-EVB) model is developed for describing the behaviour of bond breaking and making process coupled with molecular dynamics simulations. Many ab-inito methods allows to perform accurate calculations to the potential energy surface for small molecules but the extension of these methods tend to be not feasible for large number of molecules. MS-EVB model considers construction of PES for chemical reactions in an accurate and in a numerically efficient manner.
 
@@ -64,7 +64,7 @@ MS-EVB framework describing the proton transport reaction is established that al
 ** Critical Comments
 MS-EVB classical molecular dynamics technique is evidently developed for faster resolution of proton transport reactions. It is not very clear how the transition of proton from one state to an other is treated in the off-diagonal elements of the hamiltonia with the damping function $A(r_{OO},q)$. This function can describe a localized treatment of the proton with either of the water molecules but not no explanation is provided for the treatment of transition state where the charge is mostly delocalized.
 
-* Review - Proton Solvation and Transport in Hydrated Nafion
+* Review - Proton Solvation and Transport in Hydrated Nafion cite:voth2011
 ** Abstract
 Proton solvation and transport properties are studied in hydrated nafion using classical molecular dynamics simulations. The predominant features focused in this paper is to compute diffusion rates, arrhenius activation energies, and proton transport pathways. Along with the transport properties, temperature and degree of water loading effects on the proton transport are investigated. 
 
@@ -91,9 +91,10 @@ It is demonstarted in this work that hydrated Nafion was simulated at different 
 1. There is a slight disagreement of the proton diffusion rates computed at higher temperatures with that to the experimental results and no clear explanation is provided. 
 2. Further explanation on different stages of equilibration (NPT & NVT) could have been better as equilibration period is very much longer than production run.
 
-* Bibliography
+
+
 # <<bibliographystyle>>
 bibliographystyle:unsrt
 
 # <<bibliography>>
-bibliography:./references.bib
+bibliography:references.bib
